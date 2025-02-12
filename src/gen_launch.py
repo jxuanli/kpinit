@@ -113,8 +113,8 @@ def gen_launch(path):
 
     dir = os.path.dirname(path)
     # adjust kernel and initrd 
-    tokens["kernel"] = os.path.join(dir, "workplace/challenge/bzImage")
-    tokens["initrd"] = os.path.join(dir, "workplace/challenge/initramfs.cpio.gz")
+    tokens["kernel"] = os.path.join(dir, "workplace/challenge/bzImage") + " "
+    tokens["initrd"] = os.path.join(dir, "workplace/challenge/initramfs.cpio.gz") + " "
     new_content = launch_header
     new_content += qemu_cmd.split()[0] + " "
     for option in opts:
