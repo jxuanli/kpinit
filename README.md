@@ -31,10 +31,10 @@ chall/
 ├── (optional) vmlinux
 └── (optional) vuln.ko
 ```
-- [ ] generate `./chall/workplace/challenge`
-  - [ ] find and cp `./chall/bzImage ./chall/initramfs.cpio.gz`
-  - [ ] decompress `./chall/initramfs.cpio.gz`
-  - [ ] extra `init`
+- [x] generate `./chall/workplace/challenge`
+  - [x] find and cp `./chall/bzImage ./chall/initramfs.cpio.gz`
+  - [x] decompress `./chall/initramfs.cpio.gz`
+  - [x] extra `init`
 - [ ] generate `./chall/workplace/exploit/launch.sh` (rwx)
   - [x] parse the `qemu` command in `./chall/run.sh`
     - options 
