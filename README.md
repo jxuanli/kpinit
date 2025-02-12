@@ -50,3 +50,4 @@ chall/
 - [ ] extra `vuln.ko` if needed 
 - [ ] generate `debug.gdb`
 - [ ] generate exploit helpers 
+  - [ ] converting between asm and their bytecode
