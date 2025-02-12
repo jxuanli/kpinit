@@ -11,7 +11,7 @@ cp ./init ../challenge/initramfs/init
 cd ../challenge/initramfs
 find . -print0 |
   cpio --null -ov --format=newc |
-  gzip -9 >initramfs.cpio.gz
+  gzip -9 -q >initramfs.cpio.gz
 mv ./initramfs.cpio.gz ../
 popd
 
@@ -99,7 +99,7 @@ def check_append_option(opt):
 def gen_launch(path):
     f = open(path, "r+")
     content = f.read() 
-    qemu_cmd = get_qemu_cmd(content)
+    qemu_cmd = get_qemu_cmd(content).replace("\\" ," ")
     opts, tokens = get_qemu_options(qemu_cmd)
 
     if "cpu" in tokens:
@@ -109,14 +109,20 @@ def gen_launch(path):
 
     if "s" not in tokens: # enable debug 
         tokens["s"] = ""
+        opts.append("s")
+
+    dir = os.path.dirname(path)
+    # adjust kernel and initrd 
+    tokens["kernel"] = os.path.join(dir, "workplace/challenge/bzImage")
+    tokens["initrd"] = os.path.join(dir, "workplace/challenge/initramfs.cpio.gz")
     new_content = launch_header
     new_content += qemu_cmd.split()[0] + " "
     for option in opts:
         assert option in tokens
         new_content += "\\\n\t" + "-" + option + " " + tokens[option]
 
-    new_content += "setterm -linewrap on"
-    launch_fpath = os.path.join(os.path.dirname(path), "workplace/exploit/launch.sh")
+    new_content += "\n\n\nsetterm -linewrap on"
+    launch_fpath = os.path.join(dir, "workplace/exploit/launch.sh")
     f = open(launch_fpath, "w")
     f.write(new_content)
     os.chmod(launch_fpath, 0o700)

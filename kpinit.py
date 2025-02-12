@@ -1,7 +1,8 @@
-import os, shutil, subprocess
-sys.path.append(os.path.join(path.dirname(path.abspath(__file__)), "src"))
+import os, shutil, subprocess, sys
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 
 from gen_launch import gen_launch
+from utils import *
 
 RAM_NAME = "initramfs.cpio.gz"
 BZIMAGE_NAME = "bzImage"
@@ -24,15 +25,16 @@ def gen_challenge(wp_path):
     os.mkdir(ram_dirpath)
     archive_path = os.path.join(ram_dirpath, RAM_NAME)
     shutil.copy(ram_fpath, archive_path)
-    shutil.unpack_archive(archive_path, ram_dirpath)
-    os.remove(archive_path)
-    tmp = os.getcwd()
+    prev = os.getcwd()
     os.chdir(ram_dirpath)
+    subprocess.run(["gunzip", archive_path])
     cpio_fpath = os.path.join(ram_dirpath, "initramfs.cpio")
     assert os.path.isfile(cpio_fpath), "missing cpio"
-    subprocess.run(["cpio", "-idm", "<", cpio_fpath])
+    subprocess.run([f"cpio -idm < {cpio_fpath}"], shell = True)
     os.remove(cpio_fpath)
-    os.chdir(tmp)
+    os.chdir(prev)
+
+    info("finished generating workplace/challenge")
 
 """
 generate the workplace/exploit directory
@@ -49,12 +51,14 @@ def gen_exploit(wp_path):
     if os.path.isfile(init_fpath):
         shutil.copy(init_fpath, os.path.join(exploit_path, "init"))
 
+    info("finished generating workplace/exploit")
+
 """
 generate the workplace directory as specified in README.md
 """
 def gen_workplace():
     wp_path = os.path.join(os.getcwd(), "workplace")
-    os.mkdir(workplace)
+    os.mkdir(wp_path)
     gen_challenge(wp_path)
     gen_exploit(wp_path)
 
