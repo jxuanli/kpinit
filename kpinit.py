@@ -13,7 +13,7 @@ def gen_challenge(wp_path):
     os.mkdir(chall_path)
     shutil.copy2(get_config_fpath(RAMFS), os.path.join(chall_path, RAMFS))
     shutil.copy2(get_config_fpath(BZIMAGE), os.path.join(chall_path, BZIMAGE))
-    decompress_ramfs()
+    decompress_ramfs(chall_path)
     extract_vmlinux()
 
     info("finished generating workplace/challenge")
@@ -26,7 +26,7 @@ def gen_exploit(wp_path):
     os.mkdir(exploit_path)
     gen_launch()
     extract_init(wp_path, exploit_path)
-    extract_ko()
+    # extract_ko()
 
     info("finished generating workplace/exploit")
 
@@ -38,7 +38,7 @@ def gen_workplace():
     if os.path.exists(wp_path):
         assert os.path.isdir(wp_path)
         warn("removing existing workplace to generate a new one")
-        os.rmdir(wp_path)
+        shutil.rmtree(wp_path)
     os.mkdir(wp_path)
     extract_chall_settings(wp_path)
     gen_challenge(wp_path)

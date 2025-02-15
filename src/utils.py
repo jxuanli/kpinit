@@ -19,7 +19,7 @@ def get_cwd_fpath(name):
 get the file path from the CHALL_SETTING
 """
 def get_config_fpath(name):
-    settings = json.load(open(os.path.join(os.getcwd(), f"workpalce/{CHALL_SETTING}"), "r"))
+    settings = json.load(open(os.path.join(os.getcwd(), f"workplace/{CHALL_SETTING}"), "r"))
     return get_cwd_fpath(settings[name])
 
 def is_in_cwd(name):
@@ -31,10 +31,10 @@ ANSI_RED    = "\u001b[31m"
 ANSI_RESET  = "\u001b[0m"
 
 def warn(*args, **kwargs):
-    print(f"{ANSI_YELLOW}[+]{ANSI_RESET}", *args, **kwargs)
+    print(f"{ANSI_YELLOW}[-]{ANSI_RESET}", *args, **kwargs)
 
 def info(*args, **kwargs):
-    print(f"{ANSI_BLUE}[-]{ANSI_RESET}", *args, **kwargs)
+    print(f"{ANSI_BLUE}[+]{ANSI_RESET}", *args, **kwargs)
 
 def error(*args, **kwargs):
     print(f"{ANSI_RED}[x]{ANSI_RESET}", *args, **kwargs)
