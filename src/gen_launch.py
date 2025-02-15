@@ -4,7 +4,6 @@ from utils import *
 qemu_magic = "qemu-system-"
 launch_header = """#!/bin/sh
 
-pushd
 gcc ./exploit.c -o ./exploit -static
 mv ./exploit ../challenge/initramfs/exploit
 cp ./init ../challenge/initramfs/init
@@ -13,7 +12,6 @@ find . -print0 |
   cpio --null -ov --format=newc |
   gzip -9 -q >initramfs.cpio.gz
 mv ./initramfs.cpio.gz ../
-popd
 
 """
 
@@ -91,12 +89,12 @@ def check_append_option(opt):
         
 """
 @assume: the directory structure in README.md has been created
-@path: the absolute path of the run.sh file
 @effect: generate the launch.sh file
             since this parses the run.sh, it will check the interesting qemu options
             **checks SMAP, SMEP, KPTI, KASLR, and panic_on_oops**
 """
-def gen_launch(path):
+def gen_launch():
+    path = get_config_fpath(RUN_SH)
     f = open(path, "r+")
     content = f.read() 
     qemu_cmd = get_qemu_cmd(content).replace("\\" ," ")
