@@ -94,8 +94,8 @@ def check_append_option(opt):
             **checks SMAP, SMEP, KPTI, KASLR, and panic_on_oops**
 """
 def gen_launch():
-    path = get_config_fpath(RUN_SH)
-    f = open(path, "r+")
+    runsh_fpath = get_settings_fpath(RUN_SH)
+    f = open(runsh_fpath, "r")
     content = f.read() 
     qemu_cmd = get_qemu_cmd(content).replace("\\" ," ")
     opts, tokens = get_qemu_options(qemu_cmd)
@@ -109,7 +109,7 @@ def gen_launch():
         tokens["s"] = ""
         opts.append("s")
 
-    dir = os.path.dirname(path)
+    dir = os.path.dirname(runsh_fpath)
     # adjust kernel and initrd 
     tokens["kernel"] = os.path.join(dir, "workplace/challenge/bzImage") + " "
     tokens["initrd"] = os.path.join(dir, "workplace/challenge/initramfs.cpio.gz") + " "
@@ -119,7 +119,7 @@ def gen_launch():
         assert option in tokens
         new_content += "\\\n\t" + "-" + option + " " + tokens[option]
 
-    new_content += "\n\n\nsetterm -linewrap on"
+    new_content += "\n\n\nsetterm -linewrap on" # TODO:
     launch_fpath = os.path.join(dir, "workplace/exploit/launch.sh")
     f = open(launch_fpath, "w")
     f.write(new_content)

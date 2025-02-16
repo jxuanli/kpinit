@@ -9,7 +9,7 @@ The aim is to streamline the kernel pwn setup and debug process.
 ```
 chall/
 ├── workplace/ (generated)
-│   ├── naming.json
+│   ├── settings.json
 │   ├── challenge/
 │   │   ├── vmlinux (maybe)
 │   │   ├── bzImage
@@ -30,7 +30,9 @@ chall/
 ├── (optional) vmlinux
 └── (optional) vuln.ko
 ```
-- [x] generate `./workplace/naming.json` to get the names of provided files
+- [ ] generate `./workplace/settings.json` to get the names of provided files
+  - [x] auto-generation
+  - [ ] allow custom `settings.json`
 - [x] generate `./workplace/challenge`
   - [x] find and cp `./bzImage ./initramfs.cpio.gz`
   - [x] decompress `./initramfs.cpio.gz`
@@ -45,16 +47,18 @@ chall/
   - [x] build `./workplace/exploit/exploit.c`
     - include it in `./workplace/challenge/initramfs`
     - recompress `./workplace/challenge/initramfs.cpio.gz` 
-- [ ] extract `vmlinux`
-- [ ] run checks on `.config`
+- [ ] extract `vmlinux` if not already provided
+- [ ] run checks on `.config` if exists
   - [ ] else if `vmlinux` is not stripped, run checks on that
-- [ ] extra `vuln.ko` if needed 
+- [ ] extract `vuln.ko` if needed 
 - [ ] generate `debug.gdb`
-  - [ ] source `vmlinux`
-  - [ ] import `libslub`
-  - [ ] add `vuln.ko` symbols if exists
+  - [x] source `vmlinux`
+  - [ ] source `libslub`
+  - [ ] add `vuln.ko` symbols if exists 
+  - [ ] maybe need to check if `vmlinux` is stripped or not in order to add `vuln.ko` symbols 
   - [ ] add debug symbols if `vmlinux` is stripped and `kallsyms` is not disabled 
+    - probably requires running qemu commands inside the gdb session 
 - [ ] generate exploit helpers 
-  - [ ] converting between asm and their bytecode
+  - [ ] converting between asm and their machine code
 - [ ] compiles kernel if `.config` is provided
 

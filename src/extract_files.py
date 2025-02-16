@@ -1,11 +1,12 @@
 import os, shutil, subprocess, json
 from utils import *
+from checks import check_settings
 
 def decompress_ramfs(chall_path):
     ram_path = os.path.join(chall_path, "initramfs")
     os.mkdir(ram_path)
     archive_path = os.path.join(ram_path, RAMFS)
-    shutil.copy(get_config_fpath(RAMFS), archive_path)
+    shutil.copy(get_settings_fpath(RAMFS), archive_path)
     prev = os.getcwd()
     os.chdir(ram_path)
     subprocess.run(["gunzip", archive_path])
@@ -23,50 +24,40 @@ def extract_init(wp_path, exploit_path):
         warn("did not find init file")
 
 def extract_ko():
-    if get_config_fpath(VULN) is not None:
+    if get_settings_fpath(VULN_KO) is not None:
         return 
     assert False, "not implemented" # TODO: 
 
 def extract_vmlinux():
-    if get_config_fpath(VMLINUX) is not None:
+    if get_settings_fpath(VMLINUX) is not None:
         return 
     assert False, "not implemented" # TODO:
 
 """
-generate settings.json file
+generate settings.json file if does not exist, otherwise use the existing settings
 """
 def extract_chall_settings(wp_path):
-    names = {}
-    name = "bzImage"
-    if is_in_cwd(name):
-        names[BZIMAGE] = name 
-    else:
-        error(f"cannot file ../{name}")
-    name = "initramfs.cpio.gz"
-    if is_in_cwd(name):
-        names[RAMFS] = name 
-    else:
-        error(f"cannot file ../{name}")
-    name = "run.sh"
-    if is_in_cwd(name):
-        names[RUN_SH] = name 
-    else:
-        error(f"cannot file ../{name}")
-    name = "vmlinux"
-    if is_in_cwd(name):
-        names[VMLINUX] = name 
-        info(f"found ../{name}")
-    else:
-        names[name] = None
-        warn(f"cannot file ../{name}")
-
-    for fname in os.listdir(os.getcwd()):
-        if fname.endswith(".ko"):
-            names[VULN] = fname
-            info(f"found ../{name}")
-            break
-    if VULN not in names:
-        warn("cannot find the vulnerable module")
-        names[VULN] = None
-    f = open(os.path.join(wp_path, CHALL_SETTING), "w")
-    json.dump(names, f, indent=4)
+    if not os.path.exists(settings_fpath):
+        settings = {
+            BZIMAGE: BZIMAGE,
+            RAMFS: RAMFS,
+            RUN_SH: RUN_SH,
+            VMLINUX: None,
+            VULN_KO: None
+            LIBSLUB: None, 
+            MODULE_NAME: None,
+        }
+        name = "vmlinux"
+        if is_in_cwd(name):
+            settings[VMLINUX] = name 
+        path = "~/Tools/libslub/libslub.py" # default
+        if os.path.exists(path):
+            names[LIBSLUB] = path
+        for fname in os.listdir(os.getcwd()):
+            if fname.endswith(".ko"):
+                settings[VULN_KO] = fname
+                info(f"found ../{fname}")
+                break
+        f = open(os.path.join(wp_path, CHALL_SETTING), "w")
+        json.dump(names, f, indent=4)
+    check_settings(settings_fpath)
