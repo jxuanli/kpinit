@@ -7,10 +7,10 @@ def decompress_ramfs():
     os.mkdir(ram_path)
     archive_path = os.path.join(ram_path, RAMFS)
     shutil.copy(root_setting_fpath(RAMFS), archive_path)
+    cpio_fpath = challenge_path(f"{RAMFS.split('.')[0]}/initramfs.cpio")
     prev = os.getcwd()
     os.chdir(ram_path)
     subprocess.run(["gunzip", archive_path])
-    cpio_fpath = challenge_path(f"{RAMFS.split('.')[0]}/initramfs.cpio")
     assert os.path.isfile(cpio_fpath), "missing cpio: " + cpio_fpath
     subprocess.run([f"cpio -idm < {cpio_fpath}"], shell = True)
     os.remove(cpio_fpath)
@@ -39,7 +39,7 @@ def extract_vmlinux():
 generate settings.json file if does not exist, otherwise use the existing settings
 """
 def extract_chall_settings():
-    settings_fpath = wp_setting_fpath(CHALL_SETTING)
+    settings_fpath = workplace_path(CHALL_SETTING)
     if not os.path.exists(settings_fpath):
         settings = {
             BZIMAGE: BZIMAGE,
