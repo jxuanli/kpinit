@@ -2,6 +2,7 @@ import os, shutil, sys, json
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 
 from gen_launch import gen_launch
+from gen_gdb import gen_debug
 from extract_files import *
 from utils import *
 
@@ -27,6 +28,7 @@ def gen_exploit(wp_path):
     gen_launch()
     extract_init(wp_path, exploit_path)
     # extract_ko()
+    gen_debug(os.path.join(exploit_path, "debug.gdb"))
 
     info("finished generating workplace/exploit")
 
