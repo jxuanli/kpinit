@@ -66,5 +66,5 @@ def extract_chall_settings():
         json.dump(settings, f, indent=4)
         f.flush()
     f = open(settings_fpath, "r")
-    important(f"settings:\n{json.dumps(json.load(f), indent=4)}")
+    important(f"Settings:\n{json.dumps(json.load(f), indent=4)}")
     check_settings()

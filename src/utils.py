@@ -49,7 +49,7 @@ def wp_setting_fpath(setting):
     if setting in [RAMFS, BZIMAGE, VMLINUX]:
         return challenge_path(val)
     elif setting in [VULN_KO]:
-        return challenge_path(val)
+        return exploit_path(val)
     elif setting in [CHALL_SETTING]:
         return workplace_path(CHALL_SETTING)
     else: 
