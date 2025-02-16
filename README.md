@@ -11,7 +11,7 @@ chall/
 ├── workplace/ (generated)
 │   ├── settings.json
 │   ├── challenge/
-│   │   ├── vmlinux (maybe)
+│   │   ├── vmlinux
 │   │   ├── bzImage
 │   │   ├── initramfs/
 │   │   └── initramfs.cpio.gz
@@ -21,7 +21,7 @@ chall/
 │       │   └── common.c
 │       ├── launch.sh (improved run.sh)
 │       ├── init
-│       ├── vuln.ko (maybe)
+│       ├── vuln.ko
 │       ├── debug.gdb
 │       └── exploit.c (imports functions in util/)
 ├── bzImage

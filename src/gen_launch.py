@@ -63,12 +63,33 @@ def get_qemu_cmd(file_bs):
             **checks SMAP, SMEP, KPTI, KASLR, and panic_on_oops**
 """
 def gen_launch():
-    runsh_fpath = get_settings_fpath(RUN_SH)
+    runsh_fpath = root_setting_fpath(RUN_SH)
     f = open(runsh_fpath, "r")
     content = f.read() 
     qemu_cmd = get_qemu_cmd(content).replace("\\" ," ")
     opts, tokens = get_qemu_options(qemu_cmd)
 
+    if "s" not in tokens: # enable debug 
+        tokens["s"] = ""
+        opts.append("s")
+
+    # adjust kernel and initrd 
+    tokens["kernel"] = wp_setting_fpath(BZIMAGE) + " "
+    tokens["initrd"] = wp_setting_fpath(RAMFS) + " "
+    new_content = launch_header
+    new_content += qemu_cmd.split()[0] + " "
+    for option in opts:
+        assert option in tokens
+        new_content += "\\\n\t" + "-" + option + " " + tokens[option]
+
+    new_content += "\n\n\nsetterm -linewrap on" # TODO:
+    launch_fpath = exploit_path("launch.sh")
+    f = open(launch_fpath, "w")
+    f.write(new_content)
+    os.chmod(launch_fpath, 0o700)
+
+    important("Qemu command option checks")
+ 
     if "cpu" in tokens:
         check_cpu_option(tokens["cpu"])
     else:
@@ -77,27 +98,6 @@ def gen_launch():
         check_append_option(tokens["append"])
     else:
         check_append_option("")
-
-    if "s" not in tokens: # enable debug 
-        tokens["s"] = ""
-        opts.append("s")
-
-    dir = os.path.dirname(runsh_fpath)
-    # adjust kernel and initrd 
-    tokens["kernel"] = os.path.join(dir, "workplace/challenge/bzImage") + " "
-    tokens["initrd"] = os.path.join(dir, "workplace/challenge/initramfs.cpio.gz") + " "
-    new_content = launch_header
-    new_content += qemu_cmd.split()[0] + " "
-    for option in opts:
-        assert option in tokens
-        new_content += "\\\n\t" + "-" + option + " " + tokens[option]
-
-    new_content += "\n\n\nsetterm -linewrap on" # TODO:
-    launch_fpath = os.path.join(dir, "workplace/exploit/launch.sh")
-    f = open(launch_fpath, "w")
-    f.write(new_content)
-    os.chmod(launch_fpath, 0o700)
-
 
 
 

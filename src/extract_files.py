@@ -2,42 +2,44 @@ import os, shutil, subprocess, json
 from utils import *
 from checks import check_settings
 
-def decompress_ramfs(chall_path):
-    ram_path = os.path.join(chall_path, "initramfs")
+def decompress_ramfs():
+    ram_path = challenge_path("initramfs")
     os.mkdir(ram_path)
     archive_path = os.path.join(ram_path, RAMFS)
-    shutil.copy(get_settings_fpath(RAMFS), archive_path)
+    shutil.copy(root_setting_fpath(RAMFS), archive_path)
     prev = os.getcwd()
     os.chdir(ram_path)
     subprocess.run(["gunzip", archive_path])
-    cpio_fpath = os.path.join(chall_path, f"{RAMFS.split('.')[0]}/initramfs.cpio")
+    cpio_fpath = challenge_path(f"{RAMFS.split('.')[0]}/initramfs.cpio")
     assert os.path.isfile(cpio_fpath), "missing cpio: " + cpio_fpath
     subprocess.run([f"cpio -idm < {cpio_fpath}"], shell = True)
     os.remove(cpio_fpath)
     os.chdir(prev)
 
-def extract_init(wp_path, exploit_path):
-    init_fpath = os.path.join(wp_path, "challenge/initramfs/init")
+def extract_init():
+    init_fpath = challenge_path("initramfs/init")
     if os.path.isfile(init_fpath):
-        shutil.copy(init_fpath, os.path.join(exploit_path, "init"))
+        shutil.copy(init_fpath, exploit_path("init"))
     else:
         warn("did not find init file")
 
 def extract_ko():
-    if get_settings_fpath(VULN_KO) is not None:
-        return 
+    if root_setting_fpath(VULN_KO) is not None:
+        shutil.copy2(root_setting_fpath(VULN_KO), wp_setting_fpath(VULN_KO))
+        return
     assert False, "not implemented" # TODO: 
 
 def extract_vmlinux():
-    if get_settings_fpath(VMLINUX) is not None:
+    if root_setting_fpath(VMLINUX) is not None:
+        shutil.copy2(root_setting_fpath(VMLINUX), wp_setting_fpath(VMLINUX))
         return 
     assert False, "not implemented" # TODO:
 
 """
 generate settings.json file if does not exist, otherwise use the existing settings
 """
-def extract_chall_settings(wp_path):
-    settings_fpath = os.path.join(wp_path, CHALL_SETTING)
+def extract_chall_settings():
+    settings_fpath = wp_setting_fpath(CHALL_SETTING)
     if not os.path.exists(settings_fpath):
         settings = {
             BZIMAGE: BZIMAGE,
@@ -49,7 +51,7 @@ def extract_chall_settings(wp_path):
             MODULE_NAME: None,
         }
         name = "vmlinux"
-        if is_in_cwd(name):
+        if os.path.exists(root_path(name)):
             settings[VMLINUX] = name 
         path = os.path.expanduser("~/Tools/libslub/libslub.py") # default
         if os.path.exists(path):

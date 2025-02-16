@@ -9,46 +9,41 @@ from utils import *
 """
 generate the workplace/challenge directory
 """
-def gen_challenge(wp_path):
-    chall_path = os.path.join(wp_path, "challenge")
-    os.mkdir(chall_path)
-    shutil.copy2(get_settings_fpath(RAMFS), os.path.join(chall_path, RAMFS))
-    shutil.copy2(get_settings_fpath(BZIMAGE), os.path.join(chall_path, BZIMAGE))
-    decompress_ramfs(chall_path)
+def gen_challenge():
+    os.mkdir(challenge_path())
+    shutil.copy2(root_setting_fpath(RAMFS), wp_setting_fpath(RAMFS))
+    shutil.copy2(root_setting_fpath(BZIMAGE), wp_setting_fpath(BZIMAGE))
+    decompress_ramfs()
     extract_vmlinux()
-
-    info("finished generating workplace/challenge")
 
 """
 generate the workplace/exploit directory
 """
-def gen_exploit(wp_path):
-    exploit_path = os.path.join(wp_path, "exploit")
-    os.mkdir(exploit_path)
+def gen_exploit():
+    os.mkdir(exploit_path())
     gen_launch()
-    extract_init(wp_path, exploit_path)
-    # extract_ko()
-    gen_debug(os.path.join(exploit_path, "debug.gdb"))
-
-    info("finished generating workplace/exploit")
+    extract_init()
+    # extract_ko() # TODO: 
+    gen_debug()
 
 """
 generate the workplace directory as specified in README.md
 """
 def gen_workplace():
-    wp_path = get_cwd_fpath("workplace")
+    wp_path = workplace_path()
     if os.path.exists(wp_path):
         assert os.path.isdir(wp_path)
         warn("removing existing workplace/challenge and workplace/exploit to generate a new one")
-        if os.path.isdir(os.path.join(wp_path, "challenge")):
-            shutil.rmtree(os.path.join(wp_path, "challenge"))
-        if os.path.isdir(os.path.join(wp_path, "exploit")):
-            shutil.rmtree(os.path.join(wp_path, "exploit"))
+        if os.path.isdir(challenge_path()):
+            shutil.rmtree(challenge_path())
+        if os.path.isdir(exploit_path()):
+            shutil.rmtree(exploit_path())
     else:
         os.mkdir(wp_path)
-    extract_chall_settings(wp_path)
-    gen_challenge(wp_path)
-    gen_exploit(wp_path)
+    extract_chall_settings()
+    gen_challenge()
+    gen_exploit()
+    important("finished generating workplace")
 
 if __name__ == "__main__":
     gen_workplace()

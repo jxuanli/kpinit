@@ -34,11 +34,11 @@ def get_ko_gdb(module_name, ko_path):
 
 def gen_debug(dest):
     content = ""
-    content += f"file {get_settings_fpath(VMLINUX)}\n"
+    content += f"file {root_setting_fpath(VMLINUX)}\n"
     content += "target remote localhost:1234\n"
-    if get_settings_fpath(LIBSLUB) is not None:
-        content += f"source {get_settings_fpath(LIBSLUB)}"
-    if get_settings_fpath(VULN_KO) is not None:
-        content += get_ko_gdb(None, None)
+    if root_setting_fpath(LIBSLUB) is not None:
+        content += f"source {root_setting_fpath(LIBSLUB)}"
+    if root_setting_fpath(VULN_KO) is not None:
+        content += get_ko_gdb(get_setting(MODULE_NAME), wp_setting_fpath(VULN_KO))
     f = open(dest, "w")
     f.write(content)
