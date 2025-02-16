@@ -7,6 +7,7 @@ VMLINUX = "vmlinux"
 VULN_KO = "vuln"
 LIBSLUB = "libslub"
 MODULE_NAME = "module_name"
+CONFIG = "kernel_config"
 CHALL_SETTING = "setting.json"
 
 """
@@ -60,19 +61,28 @@ get the file path from the CHALL_SETTING
 def root_setting_fpath(setting):
     return root_path(get_setting(setting))
 
+def warn_none_setting(setting):
+    warn(f"the setting for {setting} is none, consider changing workplace/{CHALL_SETTING}")
+
+def error_invalid_setting(setting):
+    error(f"the setting for {setting} is invalid, change workplace/{CHALL_SETTING} in order to proceed")
+
 """
 strict setting must be enforced 
 """
 def strict_setting(setting):
-    if get_setting(setting) is None:
-        error(f"the setting for {setting} is invalid, change workplace/{CHALL_SETTING} in order to proceed")
+    if get_setting(setting) is None or os.path.exists(root_setting_fpath(setting)):
+        error_invalid_setting(setting)
 
 """
-invalid soft settings are allowed
+None soft settings are allowed
+However, if specified, must be valid
 """
 def soft_setting(setting):
     if get_setting(setting) is None:
-        warn(f"the setting for {setting} is invalid, consider changing workplace/{CHALL_SETTING}")
+        warn_none_setting(setting)
+    elif os.path.exists(root_setting_fpath(setting)):
+        error_invalid_setting(setting)
 
 ANSI_BRIGHT_GREEN = "\u001b[32;1m"
 ANSI_YELLOW = "\u001b[33m"

@@ -49,10 +49,12 @@ def extract_chall_settings():
             VULN_KO: None,
             LIBSLUB: None, 
             MODULE_NAME: None,
+            CONFIG: None,
         }
-        name = "vmlinux"
-        if os.path.exists(root_path(name)):
-            settings[VMLINUX] = name 
+        if os.path.exists(root_path(VMLINUX)):
+            settings[VMLINUX] = VMLINUX
+        if os.path.exists(root_path(CONFIG)):
+            settings[CONFIG] = CONFIG
         path = os.path.expanduser("~/Tools/libslub/libslub.py") # default
         if os.path.exists(path):
             settings[LIBSLUB] = path

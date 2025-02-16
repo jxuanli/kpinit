@@ -23,7 +23,7 @@ def gen_exploit():
     os.mkdir(exploit_path())
     gen_launch()
     extract_init()
-    # extract_ko() # TODO: 
+    extract_ko()
     gen_debug()
 
 """

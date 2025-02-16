@@ -1,6 +1,6 @@
 import os
 from utils import *
-from checks import check_cpu_option, check_append_option
+from checks import check_qemu_options
 
 qemu_magic = "qemu-system-"
 launch_header = """#!/bin/sh
@@ -88,21 +88,6 @@ def gen_launch():
     f.write(new_content)
     os.chmod(launch_fpath, 0o700)
 
-    important("Qemu command option checks")
- 
-    if "cpu" in tokens:
-        check_cpu_option(tokens["cpu"])
-    else:
-        check_cpu_option("")
-    if "append" in tokens:
-        check_append_option(tokens["append"])
-    else:
-        check_append_option("")
-
-
-
-
-
-
+    check_qemu_options(tokens)
 
 

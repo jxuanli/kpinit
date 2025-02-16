@@ -1,4 +1,5 @@
 from utils import *
+import subprocess
 
 def check_settings():
     strict_setting(BZIMAGE)
@@ -6,9 +7,13 @@ def check_settings():
     strict_setting(RUN_SH)
     soft_setting(VMLINUX)
     soft_setting(VULN_KO)
-    soft_setting(LIBSLUB)
-    soft_setting(MODULE_NAME)
-
+    soft_setting(CONFIG)
+    if get_setting(MODULE_NAME) is None:
+        warn_none_setting(MODULE_NAME)
+    if get_setting(LIBSLUB) is None:
+        warn_none_setting(LIBSLUB)
+    elif not os.path.exists(os.path.expanduser(get_setting(LIBSLUB))):
+        error_invalid_setting(LIBSLUB)
 
 """
 @opt: the cpu option for the qemu command
@@ -42,3 +47,54 @@ def check_append_option(opt):
     else:
         info("KPTI diabled")
 
+def check_qemu_options(tokens):
+    important("Qemu command options checks")
+    if "cpu" in tokens:
+        check_cpu_option(tokens["cpu"])
+    else:
+        check_cpu_option("")
+    if "append" in tokens:
+        check_append_option(tokens["append"])
+    else:
+        check_append_option("")
+
+def check_kernel_config():
+    assert False, "not implemented" # TODO:
+
+def check_vmlinux():
+    out = subprocess.check_output(["nm", "-a", wp_setting_fpath(VMLINUX)], stderr=subprocess.DEVNULL).decode().strip()
+    if len(out) < 100:
+        warn("No symbols in vmlinux")
+        return
+    symbols = {}
+    for line in out.splitlines():
+        tmp = line.split()
+        symbols[tmp[2]] = int(tmp[0], 16)
+    configs = { # TODO:
+        "RANDOM_KMALLOC_CACHES": None,
+        "FUSE_FS": None,
+        "HARDENED_USERCOPY": None,
+        "SLAB_FREELIST_RANDOM": None,
+    }
+    for c, funcs in configs.items():
+        if func is None:
+            warn(f"Kernel config {c} is not checked")
+            continue
+        for func in funcs:
+            if func in symbols:
+                warn(f"Kernel config {c} is enabled")
+                continue
+        info(f"Kernel config {c} is disabled")
+    # TODO: checks with disassembly:
+    # check SLAB_FREELIST_HARDENED
+    # check STATIC_USERMODEHELPER
+
+"""
+check mitigations from .config if exists, otherwise checks vmlinux
+"""
+def check_config():
+    important("Checkign kernel configs")
+    if get_setting(CONFIG):
+        check_kernel_config()
+    else:
+        check_vmlinux()

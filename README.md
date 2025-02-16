@@ -27,6 +27,7 @@ chall/
 ├── bzImage
 ├── run.sh
 ├── initramfs.cpio.gz
+├── (optional) .config
 ├── (optional) vmlinux
 └── (optional) vuln.ko
 ```
@@ -57,7 +58,8 @@ chall/
   - [ ] add `vuln.ko` symbols if exists 
   - [ ] maybe need to check if `vmlinux` is stripped or not in order to add `vuln.ko` symbols 
   - [ ] add debug symbols if `vmlinux` is stripped and `kallsyms` is not disabled 
-    - probably requires running qemu commands inside the gdb session 
+    - probably requires running qemu commands inside the gdb session
+  - [ ] add useful structures in gdb 
 - [ ] generate exploit helpers 
   - [ ] converting between asm and their machine code
 - [ ] compiles kernel if `.config` is provided
