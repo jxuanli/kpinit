@@ -5,6 +5,7 @@ from gen_launch import gen_launch
 from gen_debug import gen_debug
 from extract_files import *
 from utils import *
+from checks import check_config
 
 """
 generate the workplace/challenge directory
@@ -25,6 +26,7 @@ def gen_exploit():
     extract_init()
     extract_ko()
     gen_debug()
+    check_config()
 
 """
 generate the workplace directory as specified in README.md

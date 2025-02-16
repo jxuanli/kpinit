@@ -61,7 +61,6 @@ def extract_chall_settings():
         for fname in os.listdir(os.getcwd()):
             if fname.endswith(".ko"):
                 settings[VULN_KO] = fname
-                info(f"found ../{fname}")
                 break
         f = open(settings_fpath, "w")
         json.dump(settings, f, indent=4)

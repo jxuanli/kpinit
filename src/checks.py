@@ -69,7 +69,8 @@ def check_vmlinux():
     symbols = {}
     for line in out.splitlines():
         tmp = line.split()
-        symbols[tmp[2]] = int(tmp[0], 16)
+        if len(tmp[0]) == 0x10:
+            symbols[tmp[2]] = int(tmp[0], 16)
     configs = { # TODO:
         "RANDOM_KMALLOC_CACHES": None,
         "FUSE_FS": None,
@@ -77,14 +78,14 @@ def check_vmlinux():
         "SLAB_FREELIST_RANDOM": None,
     }
     for c, funcs in configs.items():
-        if func is None:
-            warn(f"Kernel config {c} is not checked")
+        if funcs is None:
+            warn(f"{c} is not checked")
             continue
         for func in funcs:
             if func in symbols:
-                warn(f"Kernel config {c} is enabled")
+                warn(f"{c} is enabled")
                 continue
-        info(f"Kernel config {c} is disabled")
+        info(f"{c} is disabled")
     # TODO: checks with disassembly:
     # check SLAB_FREELIST_HARDENED
     # check STATIC_USERMODEHELPER
