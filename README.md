@@ -30,9 +30,9 @@ chall/
 ├── (optional) vmlinux
 └── (optional) vuln.ko
 ```
-- [ ] generate `./workplace/settings.json` to get the names of provided files
+- [x] generate `./workplace/settings.json` to get the names of provided files
   - [x] auto-generation
-  - [ ] allow custom `settings.json`
+  - [x] allow custom `settings.json`
 - [x] generate `./workplace/challenge`
   - [x] find and cp `./bzImage ./initramfs.cpio.gz`
   - [x] decompress `./initramfs.cpio.gz`
@@ -53,7 +53,7 @@ chall/
 - [ ] extract `vuln.ko` if needed 
 - [ ] generate `debug.gdb`
   - [x] source `vmlinux`
-  - [ ] source `libslub`
+  - [x] source `libslub`
   - [ ] add `vuln.ko` symbols if exists 
   - [ ] maybe need to check if `vmlinux` is stripped or not in order to add `vuln.ko` symbols 
   - [ ] add debug symbols if `vmlinux` is stripped and `kallsyms` is not disabled 

@@ -2,7 +2,7 @@ import os, shutil, sys, json
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 
 from gen_launch import gen_launch
-from gen_gdb import gen_debug
+from gen_debug import gen_debug
 from extract_files import *
 from utils import *
 

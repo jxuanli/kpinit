@@ -1,5 +1,6 @@
 import os
 from utils import *
+from checks import check_cpu_option, check_append_option
 
 qemu_magic = "qemu-system-"
 launch_header = """#!/bin/sh
@@ -54,38 +55,6 @@ def get_qemu_cmd(file_bs):
     idx = file_bs.find(qemu_magic)
     assert idx > -1, "can't find qemu_magic in provided file content"
     return file_bs[idx:]
-
-"""
-@opt: the cpu option for the qemu command
-@effect: prints out checks on cpu option
-"""
-def check_cpu_option(opt):
-    if "+smep" in opt:
-        warn("SMEP enabled")
-    else:
-        info("SMEP disabled")
-    if "+smap" in opt:
-        warn("SMAP enabled")
-    else:
-        info("SMAP disabled")
-
-"""
-@opt: the append option for the qemu command
-@effect: prints out checks on append option
-"""
-def check_append_option(opt):
-    if "nokaslr" in opt:
-        info("KASLR disabled")
-    else:
-        warn("KASLR enabled")
-    if "oops=panic" in opt or "panic_on_oops=1" in opt: 
-        warn("Kernel panic on oops")
-    else:
-        info("panic_on_oops disabled")
-    if "kpti=1" in opt or "pti=on" in opt: 
-        warn("KPTI enabled")
-    else:
-        info("KPTI diabled")
         
 """
 @assume: the directory structure in README.md has been created
@@ -102,8 +71,12 @@ def gen_launch():
 
     if "cpu" in tokens:
         check_cpu_option(tokens["cpu"])
+    else:
+        check_cpu_option("")
     if "append" in tokens:
         check_append_option(tokens["append"])
+    else:
+        check_append_option("")
 
     if "s" not in tokens: # enable debug 
         tokens["s"] = ""
