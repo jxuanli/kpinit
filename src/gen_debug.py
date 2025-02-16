@@ -32,7 +32,7 @@ end
 def get_ko_gdb(module_name, ko_path):
     return ko_gdb_template.format(module_name=module_name, ko_path=ko_path)
 
-def gen_debug(dest):
+def gen_debug():
     content = ""
     content += f"file {root_setting_fpath(VMLINUX)}\n"
     content += "target remote localhost:1234\n"
@@ -40,5 +40,5 @@ def gen_debug(dest):
         content += f"source {root_setting_fpath(LIBSLUB)}"
     if root_setting_fpath(VULN_KO) is not None:
         content += get_ko_gdb(get_setting(MODULE_NAME), wp_setting_fpath(VULN_KO))
-    f = open(dest, "w")
+    f = open(exploit_path("debug.gdb"), "w")
     f.write(content)

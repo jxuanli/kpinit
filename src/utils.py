@@ -26,15 +26,15 @@ def workplace_path(fname=None):
 
 def challenge_path(fname=None):
     if fname is None:
-        return workplace_fpath("challenge/")
+        return workplace_path("challenge/")
     else: 
-        return workplace_fpath(f"challenge/{fname}")
+        return workplace_path(f"challenge/{fname}")
 
 def exploit_path(fname=None):
     if fname is None:
-        return workplace_fpath("exploit/")
+        return workplace_path("exploit/")
     else: 
-        return workplace_fpath(f"exploit/{fname}")
+        return workplace_path(f"exploit/{fname}")
 
 def get_setting(setting):
     settings = json.load(open(workplace_path(CHALL_SETTING), "r"))
