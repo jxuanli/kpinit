@@ -71,7 +71,7 @@ def error_invalid_setting(setting):
 strict setting must be enforced 
 """
 def strict_setting(setting):
-    if get_setting(setting) is None or os.path.exists(root_setting_fpath(setting)):
+    if get_setting(setting) is None or not os.path.exists(root_setting_fpath(setting)):
         error_invalid_setting(setting)
 
 """
@@ -81,7 +81,7 @@ However, if specified, must be valid
 def soft_setting(setting):
     if get_setting(setting) is None:
         warn_none_setting(setting)
-    elif os.path.exists(root_setting_fpath(setting)):
+    elif not os.path.exists(root_setting_fpath(setting)):
         error_invalid_setting(setting)
 
 ANSI_BRIGHT_GREEN = "\u001b[32;1m"
