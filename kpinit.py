@@ -3,6 +3,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 
 from gen_launch import gen_launch
 from gen_debug import gen_debug
+from gen_exploit_src import gen_exploit_src
 from extract_files import *
 from utils import *
 from checks import check_config
@@ -26,6 +27,7 @@ def gen_exploit():
     extract_init()
     extract_ko()
     gen_debug()
+    gen_exploit_src()
     check_config()
 
 """
@@ -45,7 +47,8 @@ def gen_workplace():
     extract_chall_settings()
     gen_challenge()
     gen_exploit()
-    important("finished generating workplace")
+    important("Finished generating workplace")
 
 if __name__ == "__main__":
     gen_workplace()
+    important("happy hacking!")

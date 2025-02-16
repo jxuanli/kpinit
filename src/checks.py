@@ -48,7 +48,7 @@ def check_append_option(opt):
         info("KPTI diabled")
 
 def check_qemu_options(tokens):
-    important("Qemu command options checks")
+    important("Checking qemu command line options")
     if "cpu" in tokens:
         check_cpu_option(tokens["cpu"])
     else:
@@ -94,7 +94,7 @@ def check_vmlinux():
 check mitigations from .config if exists, otherwise checks vmlinux
 """
 def check_config():
-    important("Checkign kernel configs")
+    important("Checking kernel configs")
     if get_setting(CONFIG):
         check_kernel_config()
     else:

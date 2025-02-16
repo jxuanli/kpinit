@@ -90,8 +90,8 @@ ANSI_BLUE   = "\u001b[34m"
 ANSI_RED    = "\u001b[31m"
 ANSI_RESET  = "\u001b[0m"
 
-def important(*args, **kwargs):
-    print(f"{ANSI_BRIGHT_GREEN}[!]{ANSI_RESET}", *args, **kwargs)
+def important(msg):
+    print(f"{ANSI_BRIGHT_GREEN}[!]{msg}{ANSI_RESET}")
 
 def warn(*args, **kwargs):
     print(f"{ANSI_YELLOW}[*]{ANSI_RESET}", *args, **kwargs)

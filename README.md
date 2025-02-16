@@ -5,7 +5,7 @@ WIP, heavily inspired by [kernelinit](https://github.com/Myldero/kernelinit)
 The aim is to streamline the kernel pwn setup and debug process. 
 
 ### Features
-- [ ] create a new directory structure: 
+- [x] create a new directory structure: 
 ```
 chall/
 ├── workplace/ (generated)
@@ -17,7 +17,7 @@ chall/
 │   │   └── initramfs.cpio.gz
 │   └── exploit/
 │       ├── util/
-│       │   ├── common.c
+│       │   ├── common.h
 │       │   └── common.c
 │       ├── launch.sh (improved run.sh)
 │       ├── init
@@ -62,5 +62,6 @@ chall/
   - [ ] add useful structures in gdb 
 - [ ] generate exploit helpers 
   - [ ] converting between asm and their machine code
+  - [ ] Makefile
 - [ ] compiles kernel if `.config` is provided
 
