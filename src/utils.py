@@ -6,9 +6,8 @@ RUN_SH = "run.sh"
 VMLINUX = "vmlinux"
 VULN_KO = "vuln"
 LIBSLUB = "libslub"
-MODULE_NAME = "module_name"
 CONFIG = "kernel_config"
-CHALL_SETTING = "setting.json"
+CHALL_SETTING = "settings.json"
 
 """
 get cwd file path, just a wrapper!

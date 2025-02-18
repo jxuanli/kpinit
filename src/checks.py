@@ -8,8 +8,6 @@ def check_settings():
     soft_setting(VMLINUX)
     soft_setting(VULN_KO)
     soft_setting(CONFIG)
-    if get_setting(MODULE_NAME) is None:
-        warn_none_setting(MODULE_NAME)
     if get_setting(LIBSLUB) is None:
         warn_none_setting(LIBSLUB)
     elif not os.path.exists(os.path.expanduser(get_setting(LIBSLUB))):

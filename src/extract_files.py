@@ -48,7 +48,6 @@ def extract_chall_settings():
             VMLINUX: None,
             VULN_KO: None,
             LIBSLUB: None, 
-            MODULE_NAME: None,
             CONFIG: None,
         }
         if os.path.exists(root_path(VMLINUX)):

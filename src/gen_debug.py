@@ -1,4 +1,5 @@
 from utils import *
+import subprocess
 
 ko_gdb_template = """
 python
@@ -39,6 +40,15 @@ def gen_debug():
     if root_setting_fpath(LIBSLUB) is not None:
         content += f"source {root_setting_fpath(LIBSLUB)}"
     if root_setting_fpath(VULN_KO) is not None:
-        content += get_ko_gdb(get_setting(MODULE_NAME), wp_setting_fpath(VULN_KO))
+        out = subprocess.check_output(["strings", wp_setting_fpath(VULN_KO)], stderr=subprocess.DEVNULL).decode().strip()
+        name = ''
+        for line in out.splitlines():
+            if len(line) < 20 and line.startswith("name=") and line[5:].isalnum():
+                name = line[5:]
+        if len(name) > 0:
+            info(f"found module name")
+        else:
+            warn("module name not found")
+        content += get_ko_gdb(name, wp_setting_fpath(VULN_KO))
     f = open(exploit_path("debug.gdb"), "w")
     f.write(content)
