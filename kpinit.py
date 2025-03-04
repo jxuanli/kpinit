@@ -13,8 +13,8 @@ generate the workplace/challenge directory
 """
 def gen_challenge():
     os.mkdir(challenge_path())
-    shutil.copy2(root_setting_fpath(RAMFS), wp_setting_fpath(RAMFS))
-    shutil.copy2(root_setting_fpath(BZIMAGE), wp_setting_fpath(BZIMAGE))
+    shutil.copy2(get_setting_path_from_root(RAMFS), get_setting_path(RAMFS))
+    shutil.copy2(get_setting_path_from_root(BZIMAGE), get_setting_path(BZIMAGE))
     decompress_ramfs()
     extract_vmlinux()
 

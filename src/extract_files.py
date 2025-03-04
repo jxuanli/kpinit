@@ -6,7 +6,7 @@ def decompress_ramfs():
     ram_path = challenge_path("initramfs")
     os.mkdir(ram_path)
     archive_path = os.path.join(ram_path, RAMFS)
-    shutil.copy(root_setting_fpath(RAMFS), archive_path)
+    shutil.copy(get_setting_path_from_root(RAMFS), archive_path)
     cpio_fpath = challenge_path(f"{RAMFS.split('.')[0]}/initramfs.cpio")
     prev = os.getcwd()
     os.chdir(ram_path)
@@ -24,14 +24,33 @@ def extract_init():
         warn("did not find init file")
 
 def extract_ko():
-    if root_setting_fpath(VULN_KO) is not None:
-        shutil.copy2(root_setting_fpath(VULN_KO), wp_setting_fpath(VULN_KO))
+    if get_setting_path_from_root(VULN_KO) is not None:
+        shutil.copy2(get_setting_path_from_root(VULN_KO), get_setting_path(VULN_KO))
         return
-    assert False, "not implemented" # TODO: 
+    mods = []
+    for _, _, files in os.walk(root_path()):
+        for file in files:
+            if file.endswith(".ko"):
+                mods.append(file)
+    mod = None
+    if len(mods) > 0:
+        mod = mods[0]
+        if len(mods) > 1:
+            warn("detected multiple loadable modules, select which one ❱")
+            mod_substr = input()
+            for m in mods:
+                if mod_substr in m:
+                    mod = m
+                    break
+    if mod is None or not os.path.exists(root_path(mod)):
+        warn("no kernel loadable modules found")
+        return
+    assert set_setting(VULN_KO, mod)
+    shutil.copy2(get_setting_path_from_root(VULN_KO), get_setting_path(VULN_KO))
 
 def extract_vmlinux():
-    if root_setting_fpath(VMLINUX) is not None:
-        shutil.copy2(root_setting_fpath(VMLINUX), wp_setting_fpath(VMLINUX))
+    if get_setting_path_from_root(VMLINUX) is not None:
+        shutil.copy2(get_setting_path_from_root(VMLINUX), get_setting_path(VMLINUX))
         return 
     assert False, "not implemented" # TODO:
 
@@ -39,8 +58,8 @@ def extract_vmlinux():
 generate settings.json file if does not exist, otherwise use the existing settings
 """
 def extract_chall_settings():
-    settings_fpath = workplace_path(CHALL_SETTING)
-    if not os.path.exists(settings_fpath):
+    settings_path = workplace_path(CHALL_SETTING)
+    if not os.path.exists(settings_path):
         settings = {
             BZIMAGE: BZIMAGE,
             RAMFS: RAMFS,
@@ -61,9 +80,9 @@ def extract_chall_settings():
             if fname.endswith(".ko"):
                 settings[VULN_KO] = fname
                 break
-        f = open(settings_fpath, "w")
+        f = open(settings_path, "w")
         json.dump(settings, f, indent=4)
         f.flush()
-    f = open(settings_fpath, "r")
+    f = open(settings_path, "r")
     important(f"Settings:\n{json.dumps(json.load(f), indent=4)}")
     check_settings()

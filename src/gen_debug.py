@@ -35,12 +35,12 @@ def get_ko_gdb(module_name, ko_path):
 
 def gen_debug():
     content = ""
-    content += f"file {root_setting_fpath(VMLINUX)}\n"
+    content += f"file {get_setting_path_from_root(VMLINUX)}\n"
     content += "target remote localhost:1234\n"
-    if root_setting_fpath(LIBSLUB) is not None:
-        content += f"source {root_setting_fpath(LIBSLUB)}"
-    if root_setting_fpath(VULN_KO) is not None:
-        out = subprocess.check_output(["strings", wp_setting_fpath(VULN_KO)], stderr=subprocess.DEVNULL).decode().strip()
+    if get_setting_path_from_root(LIBSLUB) is not None:
+        content += f"source {get_setting_path_from_root(LIBSLUB)}"
+    if get_setting_path_from_root(VULN_KO) is not None:
+        out = subprocess.check_output(["strings", get_setting_path(VULN_KO)], stderr=subprocess.DEVNULL).decode().strip()
         name = ''
         for line in out.splitlines():
             if len(line) < 20 and line.startswith("name=") and line[5:].isalnum():
@@ -49,6 +49,6 @@ def gen_debug():
             info(f"found module name")
         else:
             warn("module name not found")
-        content += get_ko_gdb(name, wp_setting_fpath(VULN_KO))
+        content += get_ko_gdb(name, get_setting_path(VULN_KO))
     f = open(exploit_path("debug.gdb"), "w")
     f.write(content)

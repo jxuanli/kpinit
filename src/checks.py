@@ -60,7 +60,7 @@ def check_kernel_config():
     assert False, "not implemented" # TODO:
 
 def check_vmlinux():
-    out = subprocess.check_output(["nm", "-a", wp_setting_fpath(VMLINUX)], stderr=subprocess.DEVNULL).decode().strip()
+    out = subprocess.check_output(["nm", "-a", get_setting_path(VMLINUX)], stderr=subprocess.DEVNULL).decode().strip()
     if len(out) < 100:
         warn("No symbols in vmlinux")
         return

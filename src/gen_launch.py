@@ -63,7 +63,7 @@ def get_qemu_cmd(file_bs):
             **checks SMAP, SMEP, KPTI, KASLR, and panic_on_oops**
 """
 def gen_launch():
-    runsh_fpath = root_setting_fpath(RUN_SH)
+    runsh_fpath = get_setting_path_from_root(RUN_SH)
     f = open(runsh_fpath, "r")
     content = f.read() 
     qemu_cmd = get_qemu_cmd(content).replace("\\" ," ")
@@ -74,8 +74,8 @@ def gen_launch():
         opts.append("s")
 
     # adjust kernel and initrd 
-    tokens["kernel"] = wp_setting_fpath(BZIMAGE) + " "
-    tokens["initrd"] = wp_setting_fpath(RAMFS) + " "
+    tokens["kernel"] = get_setting_path(BZIMAGE) + " "
+    tokens["initrd"] = get_setting_path(RAMFS) + " "
     new_content = launch_header
     new_content += qemu_cmd.split()[0] + " "
     for option in opts:
