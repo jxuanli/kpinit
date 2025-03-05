@@ -1,6 +1,12 @@
 from utils import *
 import subprocess
 
+def check_lib(setting):
+    if get_setting(setting) is None:
+        warn_none_setting(setting)
+    elif not os.path.exists(os.path.expanduser(get_setting(setting))):
+        error_invalid_setting(setting)
+
 def check_settings():
     strict_setting(BZIMAGE)
     strict_setting(RAMFS)
@@ -8,10 +14,8 @@ def check_settings():
     soft_setting(VMLINUX)
     soft_setting(VULN_KO)
     soft_setting(CONFIG)
-    if get_setting(LIBSLUB) is None:
-        warn_none_setting(LIBSLUB)
-    elif not os.path.exists(os.path.expanduser(get_setting(LIBSLUB))):
-        error_invalid_setting(LIBSLUB)
+    check_lib(LIBSLUB)
+    check_lib(LIBKERNEL)
 
 """
 @opt: the cpu option for the qemu command

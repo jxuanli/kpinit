@@ -38,7 +38,9 @@ def gen_debug():
     content += f"file {get_setting_path_from_root(VMLINUX)}\n"
     content += "target remote localhost:1234\n"
     if get_setting_path_from_root(LIBSLUB) is not None:
-        content += f"source {get_setting_path_from_root(LIBSLUB)}"
+        content += f"source {get_setting_path_from_root(LIBSLUB)}\n"
+    if get_setting_path_from_root(LIBKERNEL) is not None:
+        content += f"source {get_setting_path_from_root(LIBKERNEL)}\n"
     if get_setting_path_from_root(VULN_KO) is not None:
         out = subprocess.check_output(["strings", get_setting_path(VULN_KO)], stderr=subprocess.DEVNULL).decode().strip()
         name = ''

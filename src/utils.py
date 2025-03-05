@@ -6,6 +6,7 @@ RUN_SH = "run.sh"
 VMLINUX = "vmlinux"
 VULN_KO = "vuln"
 LIBSLUB = "libslub"
+LIBKERNEL = "libkernel"
 CONFIG = "kernel_config"
 CHALL_SETTING = "settings.json"
 

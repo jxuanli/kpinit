@@ -67,6 +67,7 @@ def extract_chall_settings():
             VMLINUX: None,
             VULN_KO: None,
             LIBSLUB: None, 
+            LIBKERNEL: None,
             CONFIG: None,
         }
         if os.path.exists(root_path(VMLINUX)):
@@ -76,6 +77,9 @@ def extract_chall_settings():
         path = os.path.expanduser("~/Tools/libslub/libslub.py") # default
         if os.path.exists(path):
             settings[LIBSLUB] = path
+        path = os.path.expanduser("~/Tools/libkernel/libkernel.py") # default
+        if os.path.exists(path):
+            settings[LIBKERNEL] = path
         for fname in os.listdir(os.getcwd()):
             if fname.endswith(".ko"):
                 settings[VULN_KO] = fname
