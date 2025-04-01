@@ -1,4 +1,5 @@
 import os, shutil, sys, json
+
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 
 from gen_launch import gen_launch
@@ -8,36 +9,43 @@ from extract_files import *
 from utils import *
 from checks import check_config
 
-"""
-generate the workplace/challenge directory
-"""
+
 def gen_challenge():
+    """
+    generate the workplace/challenge directory
+    """
     os.mkdir(challenge_path())
     shutil.copy2(get_setting_path_from_root(RAMFS), get_setting_path(RAMFS))
     shutil.copy2(get_setting_path_from_root(BZIMAGE), get_setting_path(BZIMAGE))
-    decompress_ramfs()
+    if get_setting(RAMFS) is not None:
+        decompress_ramfs()
     extract_vmlinux()
 
-"""
-generate the workplace/exploit directory
-"""
+
 def gen_exploit():
+    """
+    generate the workplace/exploit directory
+    """
     os.mkdir(exploit_path())
     gen_launch()
-    extract_init()
-    extract_ko()
+    if get_setting(RAMFS) is not None:
+        extract_init()
+        extract_ko()
     gen_debug()
     gen_exploit_src()
     check_config()
 
-"""
-generate the workplace directory as specified in README.md
-"""
+
 def gen_workplace():
+    """
+    generate the workplace directory as specified in README.md
+    """
     wp_path = workplace_path()
     if os.path.exists(wp_path):
         assert os.path.isdir(wp_path)
-        warn("removing existing workplace/challenge and workplace/exploit to generate a new one")
+        warn(
+            "removing existing workplace/challenge and workplace/exploit to generate a new one"
+        )
         if os.path.isdir(challenge_path()):
             shutil.rmtree(challenge_path())
         if os.path.isdir(exploit_path()):
@@ -48,6 +56,7 @@ def gen_workplace():
     gen_challenge()
     gen_exploit()
     important("Finished generating workplace")
+
 
 if __name__ == "__main__":
     gen_workplace()

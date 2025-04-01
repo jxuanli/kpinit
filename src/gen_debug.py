@@ -30,20 +30,28 @@ gdb.execute(f'add-symbol-file {ko_path} {{target_text_addr:#x}}')
 end
 """
 
+
 def get_ko_gdb(module_name, ko_path):
     return ko_gdb_template.format(module_name=module_name, ko_path=ko_path)
+
 
 def gen_debug():
     content = ""
     content += f"file {get_setting_path_from_root(VMLINUX)}\n"
     content += "target remote localhost:1234\n"
-    if get_setting_path_from_root(LIBSLUB) is not None:
+    if get_setting(LIBSLUB) is not None:
         content += f"source {get_setting_path_from_root(LIBSLUB)}\n"
-    if get_setting_path_from_root(LIBKERNEL) is not None:
+    if get_setting(LIBKERNEL) is not None:
         content += f"source {get_setting_path_from_root(LIBKERNEL)}\n"
-    if get_setting_path_from_root(VULN_KO) is not None:
-        out = subprocess.check_output(["strings", get_setting_path(VULN_KO)], stderr=subprocess.DEVNULL).decode().strip()
-        name = ''
+    if get_setting(VULN_KO) is not None:
+        out = (
+            subprocess.check_output(
+                ["strings", get_setting_path(VULN_KO)], stderr=subprocess.DEVNULL
+            )
+            .decode()
+            .strip()
+        )
+        name = ""
         for line in out.splitlines():
             if len(line) < 20 and line.startswith("name=") and line[5:].isalnum():
                 name = line[5:]

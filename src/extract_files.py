@@ -2,6 +2,7 @@ import os, shutil, subprocess, json
 from utils import *
 from checks import check_settings
 
+
 def decompress_ramfs():
     ram_path = challenge_path("initramfs")
     os.mkdir(ram_path)
@@ -12,9 +13,10 @@ def decompress_ramfs():
     os.chdir(ram_path)
     subprocess.run(["gunzip", archive_path])
     assert os.path.isfile(cpio_fpath), "missing cpio: " + cpio_fpath
-    subprocess.run([f"cpio -idm < {cpio_fpath}"], shell = True)
+    subprocess.run([f"cpio -idm < {cpio_fpath}"], shell=True)
     os.remove(cpio_fpath)
     os.chdir(prev)
+
 
 def extract_init():
     init_fpath = challenge_path("initramfs/init")
@@ -22,6 +24,7 @@ def extract_init():
         shutil.copy(init_fpath, exploit_path("init"))
     else:
         warn("did not find init file")
+
 
 def extract_ko():
     if get_setting_path_from_root(VULN_KO) is not None:
@@ -48,36 +51,41 @@ def extract_ko():
     assert set_setting(VULN_KO, mod)
     shutil.copy2(get_setting_path_from_root(VULN_KO), get_setting_path(VULN_KO))
 
+
 def extract_vmlinux():
     if get_setting_path_from_root(VMLINUX) is not None:
         shutil.copy2(get_setting_path_from_root(VMLINUX), get_setting_path(VMLINUX))
-        return 
-    assert False, "not implemented" # TODO:
+        return
+    assert False, "not implemented"  # TODO:
 
-"""
-generate settings.json file if does not exist, otherwise use the existing settings
-"""
+
 def extract_chall_settings():
+    """
+    generate settings.json file if does not exist, otherwise use the existing settings
+    """
     settings_path = workplace_path(CHALL_SETTING)
     if not os.path.exists(settings_path):
         settings = {
             BZIMAGE: BZIMAGE,
-            RAMFS: RAMFS,
+            RAMFS: None,
             RUN_SH: RUN_SH,
             VMLINUX: None,
             VULN_KO: None,
-            LIBSLUB: None, 
+            LIBSLUB: None,
             LIBKERNEL: None,
             CONFIG: None,
+            QCOW: None,
         }
         if os.path.exists(root_path(VMLINUX)):
             settings[VMLINUX] = VMLINUX
         if os.path.exists(root_path(CONFIG)):
             settings[CONFIG] = CONFIG
-        path = os.path.expanduser("~/Tools/libslub/libslub.py") # default
+        if os.path.exists(root_path(RAMFS)):
+            settings[RAMFS] = RAMFS
+        path = os.path.expanduser("~/Tools/libslub/libslub.py")  # default
         if os.path.exists(path):
             settings[LIBSLUB] = path
-        path = os.path.expanduser("~/Tools/libkernel/libkernel.py") # default
+        path = os.path.expanduser("~/Tools/libkernel/libkernel.py")  # default
         if os.path.exists(path):
             settings[LIBKERNEL] = path
         for fname in os.listdir(os.getcwd()):

@@ -55,7 +55,8 @@ chall/
 - [ ] generate `debug.gdb`
   - [x] source `vmlinux`
   - [x] source `libslub`
-  - [ ] add `vuln.ko` symbols if exists 
+  - [x] add `vuln.ko` symbols if exists
+  - [ ] toggle `KASLR`
   - [ ] maybe need to check if `vmlinux` is stripped or not in order to add `vuln.ko` symbols 
   - [ ] add debug symbols if `vmlinux` is stripped and `kallsyms` is not disabled 
     - probably requires running qemu commands inside the gdb session
@@ -64,4 +65,5 @@ chall/
   - [ ] converting between asm and their machine code
   - [ ] Makefile
 - [ ] compiles kernel if `.config` is provided
+- [ ] add source code
 
