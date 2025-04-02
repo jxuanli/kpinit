@@ -1,12 +1,18 @@
-import os, shutil, sys, json
+import os, shutil, sys
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 
 from gen_launch import gen_launch
 from gen_debug import gen_debug
 from gen_exploit_src import gen_exploit_src
-from extract_files import *
-from utils import *
+from extract_files import (
+    decompress_ramfs,
+    extract_vmlinux,
+    extract_context,
+    extract_init,
+    extract_ko,
+)
+from utils import logger, ctx
 from checks import check_config
 
 
@@ -14,10 +20,10 @@ def gen_challenge():
     """
     generate the workplace/challenge directory
     """
-    os.mkdir(challenge_path())
-    shutil.copy2(get_setting_path_from_root(RAMFS), get_setting_path(RAMFS))
-    shutil.copy2(get_setting_path_from_root(BZIMAGE), get_setting_path(BZIMAGE))
-    if get_setting(RAMFS) is not None:
+    os.mkdir(ctx.challenge_path())
+    shutil.copy2(ctx.get_path_root(ctx.BZIMAGE), ctx.get_path(ctx.BZIMAGE))
+    if ctx.get(ctx.RAMFS) is not None:
+        shutil.copy2(ctx.get_path_root(ctx.RAMFS), ctx.get_path(ctx.RAMFS))
         decompress_ramfs()
     extract_vmlinux()
 
@@ -26,9 +32,9 @@ def gen_exploit():
     """
     generate the workplace/exploit directory
     """
-    os.mkdir(exploit_path())
+    os.mkdir(ctx.exploit_path())
     gen_launch()
-    if get_setting(RAMFS) is not None:
+    if ctx.get(ctx.RAMFS) is not None:
         extract_init()
         extract_ko()
     gen_debug()
@@ -40,24 +46,24 @@ def gen_workplace():
     """
     generate the workplace directory as specified in README.md
     """
-    wp_path = workplace_path()
+    wp_path = ctx.workplace_path()
     if os.path.exists(wp_path):
         assert os.path.isdir(wp_path)
-        warn(
+        logger.warn(
             "removing existing workplace/challenge and workplace/exploit to generate a new one"
         )
-        if os.path.isdir(challenge_path()):
-            shutil.rmtree(challenge_path())
-        if os.path.isdir(exploit_path()):
-            shutil.rmtree(exploit_path())
+        if os.path.isdir(ctx.challenge_path()):
+            shutil.rmtree(ctx.challenge_path())
+        if os.path.isdir(ctx.exploit_path()):
+            shutil.rmtree(ctx.exploit_path())
     else:
         os.mkdir(wp_path)
-    extract_chall_settings()
+    extract_context()
     gen_challenge()
     gen_exploit()
-    important("Finished generating workplace")
+    logger.important("Finished generating workplace")
 
 
 if __name__ == "__main__":
     gen_workplace()
-    important("happy hacking!")
+    logger.important("happy hacking!")

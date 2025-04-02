@@ -1,4 +1,4 @@
-from utils import *
+from utils import logger, ctx
 import subprocess
 
 ko_gdb_template = """
@@ -37,16 +37,16 @@ def get_ko_gdb(module_name, ko_path):
 
 def gen_debug():
     content = ""
-    content += f"file {get_setting_path_from_root(VMLINUX)}\n"
+    content += f"file {ctx.get_path_root(ctx.VMLINUX)}\n"
     content += "target remote localhost:1234\n"
-    if get_setting(LIBSLUB) is not None:
-        content += f"source {get_setting_path_from_root(LIBSLUB)}\n"
-    if get_setting(LIBKERNEL) is not None:
-        content += f"source {get_setting_path_from_root(LIBKERNEL)}\n"
-    if get_setting(VULN_KO) is not None:
+    if ctx.get(ctx.LIBSLUB) is not None:
+        content += f"source {ctx.get_path_root(ctx.LIBSLUB)}\n"
+    if ctx.get(ctx.LIBKERNEL) is not None:
+        content += f"source {ctx.get_path_root(ctx.LIBKERNEL)}\n"
+    if ctx.get(ctx.VULN_KO) is not None:
         out = (
             subprocess.check_output(
-                ["strings", get_setting_path(VULN_KO)], stderr=subprocess.DEVNULL
+                ["strings", ctx.get_path(ctx.VULN_KO)], stderr=subprocess.DEVNULL
             )
             .decode()
             .strip()
@@ -56,9 +56,9 @@ def gen_debug():
             if len(line) < 20 and line.startswith("name=") and line[5:].isalnum():
                 name = line[5:]
         if len(name) > 0:
-            info(f"found module name")
+            logger.info(f"found module name")
         else:
-            warn("module name not found")
-        content += get_ko_gdb(name, get_setting_path(VULN_KO))
-    f = open(exploit_path("debug.gdb"), "w")
+            logger.warn("module name not found")
+        content += get_ko_gdb(name, ctx.get_path(ctx.VULN_KO))
+    f = open(ctx.exploit_path("debug.gdb"), "w")
     f.write(content)

@@ -1,5 +1,5 @@
 import os
-from utils import *
+from utils import logger, ctx
 from checks import check_qemu_options
 
 qemu_magic = "qemu-system-"
@@ -63,7 +63,7 @@ def get_qemu_cmd(file_bs):
             **checks SMAP, SMEP, KPTI, KASLR, and panic_on_oops**
 """
 def gen_launch():
-    runsh_fpath = get_setting_path_from_root(RUN_SH)
+    runsh_fpath = ctx.get_path_root(ctx.RUN_SH)
     f = open(runsh_fpath, "r")
     content = f.read() 
     qemu_cmd = get_qemu_cmd(content).replace("\\" ," ")
@@ -74,8 +74,8 @@ def gen_launch():
         opts.append("s")
 
     # adjust kernel and initrd 
-    tokens["kernel"] = get_setting_path(BZIMAGE) + " "
-    tokens["initrd"] = get_setting_path(RAMFS) + " "
+    tokens["kernel"] = ctx.get_path(ctx.BZIMAGE) + " "
+    tokens["initrd"] = ctx.get_path(ctx.RAMFS) + " "
     new_content = launch_header
     new_content += qemu_cmd.split()[0] + " "
     for option in opts:
@@ -83,7 +83,7 @@ def gen_launch():
         new_content += "\\\n\t" + "-" + option + " " + tokens[option]
 
     new_content += "\n\n\nsetterm -linewrap on" # TODO:
-    launch_fpath = exploit_path("launch.sh")
+    launch_fpath = ctx.exploit_path("launch.sh")
     f = open(launch_fpath, "w")
     f.write(new_content)
     os.chmod(launch_fpath, 0o700)

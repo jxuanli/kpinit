@@ -1,14 +1,13 @@
-import os, shutil, subprocess, json
-from utils import *
-from checks import check_settings
+import os, shutil, subprocess
+from utils import logger, ctx
 
 
 def decompress_ramfs():
-    ram_path = challenge_path("initramfs")
+    ram_path = ctx.challenge_path("initramfs")
     os.mkdir(ram_path)
-    archive_path = os.path.join(ram_path, RAMFS)
-    shutil.copy(get_setting_path_from_root(RAMFS), archive_path)
-    cpio_fpath = challenge_path(f"{RAMFS.split('.')[0]}/initramfs.cpio")
+    archive_path = os.path.join(ram_path, ctx.RAMFS)
+    shutil.copy(ctx.get_path_root(ctx.RAMFS), archive_path)
+    cpio_fpath = ctx.challenge_path(f"{ctx.RAMFS.split('.')[0]}/initramfs.cpio")
     prev = os.getcwd()
     os.chdir(ram_path)
     subprocess.run(["gunzip", archive_path])
@@ -19,19 +18,19 @@ def decompress_ramfs():
 
 
 def extract_init():
-    init_fpath = challenge_path("initramfs/init")
+    init_fpath = ctx.challenge_path("initramfs/init")
     if os.path.isfile(init_fpath):
-        shutil.copy(init_fpath, exploit_path("init"))
+        shutil.copy(init_fpath, ctx.exploit_path("init"))
     else:
-        warn("did not find init file")
+        logger.warn("did not find init file")
 
 
 def extract_ko():
-    if get_setting_path_from_root(VULN_KO) is not None:
-        shutil.copy2(get_setting_path_from_root(VULN_KO), get_setting_path(VULN_KO))
+    if ctx.get_path_root(ctx.VULN_KO) is not None:
+        shutil.copy2(ctx.get_path_root(ctx.VULN_KO), ctx.get_path(ctx.VULN_KO))
         return
     mods = []
-    for _, _, files in os.walk(root_path()):
+    for _, _, files in os.walk(ctx.root_path()):
         for file in files:
             if file.endswith(".ko"):
                 mods.append(file)
@@ -39,62 +38,43 @@ def extract_ko():
     if len(mods) > 0:
         mod = mods[0]
         if len(mods) > 1:
-            warn("detected multiple loadable modules, select which one ❱")
+            logger.warn("detected multiple loadable modules, select which one ❱")
             mod_substr = input()
             for m in mods:
                 if mod_substr in m:
                     mod = m
                     break
-    if mod is None or not os.path.exists(root_path(mod)):
-        warn("no kernel loadable modules found")
+    if mod is None or not os.path.exists(ctx.ctx.root_path(mod)):
+        logger.warn("no kernel loadable modules found")
         return
-    assert set_setting(VULN_KO, mod)
-    shutil.copy2(get_setting_path_from_root(VULN_KO), get_setting_path(VULN_KO))
+    ctx.set(ctx.VULN_KO, mod)
+    shutil.copy2(ctx.get_path_root(ctx.VULN_KO), ctx.get_path(ctx.VULN_KO))
 
 
 def extract_vmlinux():
-    if get_setting_path_from_root(VMLINUX) is not None:
-        shutil.copy2(get_setting_path_from_root(VMLINUX), get_setting_path(VMLINUX))
+    if ctx.get_path_root(ctx.VMLINUX) is not None:
+        shutil.copy2(ctx.get_path_root(ctx.VMLINUX), ctx.get_path(ctx.VMLINUX))
         return
     assert False, "not implemented"  # TODO:
 
 
-def extract_chall_settings():
+def extract_context():
     """
     generate settings.json file if does not exist, otherwise use the existing settings
     """
-    settings_path = workplace_path(CHALL_SETTING)
-    if not os.path.exists(settings_path):
-        settings = {
-            BZIMAGE: BZIMAGE,
-            RAMFS: None,
-            RUN_SH: RUN_SH,
-            VMLINUX: None,
-            VULN_KO: None,
-            LIBSLUB: None,
-            LIBKERNEL: None,
-            CONFIG: None,
-            QCOW: None,
-        }
-        if os.path.exists(root_path(VMLINUX)):
-            settings[VMLINUX] = VMLINUX
-        if os.path.exists(root_path(CONFIG)):
-            settings[CONFIG] = CONFIG
-        if os.path.exists(root_path(RAMFS)):
-            settings[RAMFS] = RAMFS
-        path = os.path.expanduser("~/Tools/libslub/libslub.py")  # default
-        if os.path.exists(path):
-            settings[LIBSLUB] = path
-        path = os.path.expanduser("~/Tools/libkernel/libkernel.py")  # default
-        if os.path.exists(path):
-            settings[LIBKERNEL] = path
+    if not ctx.load():
+        ctx.set_path(ctx.BZIMAGE, ctx.root_path(ctx.BZIMAGE), True)
+        ctx.set_path(ctx.RUN_SH, ctx.root_path(ctx.RUN_SH), True)
+        ctx.set_path(ctx.VMLINUX, ctx.root_path(ctx.VMLINUX))
+        ctx.set_path(ctx.CONFIG, ctx.root_path(ctx.CONFIG))
+        ctx.set_path(ctx.RAMFS, ctx.root_path(ctx.RAMFS))
+        ctx.set_path(ctx.LIBSLUB, os.path.expanduser("~/Tools/libslub/libslub.py"))
+        ctx.set_path(
+            ctx.LIBKERNEL, os.path.expanduser("~/Tools/libkernel/libkernel.py")
+        )
         for fname in os.listdir(os.getcwd()):
             if fname.endswith(".ko"):
-                settings[VULN_KO] = fname
+                ctx.set_path(ctx.VULN_KO, ctx.root_path(fname))
                 break
-        f = open(settings_path, "w")
-        json.dump(settings, f, indent=4)
-        f.flush()
-    f = open(settings_path, "r")
-    important(f"Settings:\n{json.dumps(json.load(f), indent=4)}")
-    check_settings()
+    logger.important(ctx)
+    ctx.check()
