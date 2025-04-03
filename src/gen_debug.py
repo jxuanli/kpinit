@@ -45,6 +45,8 @@ def gen_debug():
         content += f"source {ctx.get(ctx.LIBSLUB)}\n"
     if ctx.get(ctx.LIBKERNEL) is not None:
         content += f"source {ctx.get(ctx.LIBKERNEL)}\n"
+    if ctx.get(ctx.LINUX_SRC) is not None:
+        content += f"set substitute-path ./ {ctx.get(ctx.LINUX_SRC)}\n"
     if ctx.get(ctx.VULN_KO) is not None:
         out = (
             subprocess.check_output(
