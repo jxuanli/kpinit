@@ -37,12 +37,14 @@ def get_ko_gdb(module_name, ko_path):
 
 def gen_debug():
     content = ""
-    content += f"file {ctx.get_path_root(ctx.VMLINUX)}\n"
+    if ctx.get(ctx.GDB_PLUGIN) is not None:
+        content += f"source {ctx.get(ctx.GDB_PLUGIN)}\n"
+    content += f"file {ctx.get_path(ctx.VMLINUX)}\n"
     content += "target remote localhost:1234\n"
     if ctx.get(ctx.LIBSLUB) is not None:
-        content += f"source {ctx.get_path_root(ctx.LIBSLUB)}\n"
+        content += f"source {ctx.get(ctx.LIBSLUB)}\n"
     if ctx.get(ctx.LIBKERNEL) is not None:
-        content += f"source {ctx.get_path_root(ctx.LIBKERNEL)}\n"
+        content += f"source {ctx.get(ctx.LIBKERNEL)}\n"
     if ctx.get(ctx.VULN_KO) is not None:
         out = (
             subprocess.check_output(

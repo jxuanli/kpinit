@@ -38,7 +38,7 @@ chall/
   - [x] find and cp `./bzImage ./initramfs.cpio.gz`
   - [x] decompress `./initramfs.cpio.gz`
   - [x] extract `init`
-- [ ] generate `./workplace/exploit/launch.sh` (rwx)
+- [x] generate `./workplace/exploit/launch.sh` (rwx)
   - [x] parse the `qemu` command in `./chall/run.sh`
     - options 
   - [x] allow `--debug` mode
@@ -47,7 +47,9 @@ chall/
   - [x] build `./workplace/exploit/exploit.c`
     - include it in `./workplace/challenge/initramfs`
     - recompress `./workplace/challenge/initramfs.cpio.gz` 
-  - [ ] Autostart two panes -- if either zellij or tmux is installed
+  - [x] Autostart two panes
+    - support either [`zellij`](https://github.com/zellij-org/zellij) or `tmux`
+    - support custom GDB plugin path (this is mainly because the author wants to test out his own pwndbg contributions and it might be different from the one used for userland pwn)
 - [ ] extract `vmlinux` if not already provided
 - [ ] run checks on `.config` if exists
   - [ ] else if `vmlinux` is not stripped, run checks on that
@@ -61,9 +63,11 @@ chall/
     - probably requires running qemu commands inside the gdb session
   - [ ] add useful structures in gdb
   - [ ] source Linux source code
+  - [ ] support custom breakpoints
 - [ ] generate exploit helpers 
   - [ ] converting between asm and their machine code
   - [ ] Makefile
 - [ ] compiles kernel if `.config` is provided
 - [x] `qcow` file format support (instead of `cpio`)
-
+- [ ] enable envvar to specify file paths (for gdb plugins, etc)
+- [ ] unintended?

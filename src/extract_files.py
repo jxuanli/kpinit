@@ -76,6 +76,9 @@ def extract_context():
         ctx.set_path(
             ctx.LIBKERNEL, os.path.expanduser("~/Tools/libkernel/libkernel.py")
         )
+        ctx.set_path(
+            ctx.GDB_PLUGIN, os.path.expanduser("~/Documents/pwndbg/gdbinit.py")
+        )
         for fname in os.listdir(os.getcwd()):
             if fname.endswith(".ko"):
                 ctx.set_path(ctx.VULN_KO, ctx.root_path(fname))
@@ -83,6 +86,8 @@ def extract_context():
                 ctx.set_path(ctx.QCOW, ctx.root_path(fname))
             elif fname.endswith(".sh"):
                 ctx.set_path(ctx.RUN_SH, ctx.root_path(fname), True)
+            elif "linux" in fname and os.path.isdir(ctx.root_path(fname)):
+                ctx.set_path(ctx.LINUX_SRC, ctx.root_path(fname))
     logger.important(ctx)
     ctx.check()
 
