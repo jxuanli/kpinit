@@ -21,6 +21,7 @@ chall/
 │       │   ├── common.h
 │       │   └── common.c
 │       ├── launch.sh (improved run.sh)
+│       ├── bps.gdb 
 │       ├── init
 │       ├── vuln.ko
 │       └── exploit.c (imports functions in util/)
@@ -62,8 +63,8 @@ chall/
   - [ ] add debug symbols if `vmlinux` is stripped and `kallsyms` is not disabled 
     - probably requires running qemu commands inside the gdb session
   - [ ] add useful structures in gdb
-  - [ ] source Linux source code
-  - [ ] support custom breakpoints
+  - [x] source Linux source code
+  - [x] support custom breakpoints
 - [ ] generate exploit helpers 
   - [ ] converting between asm and their machine code
   - [ ] Makefile

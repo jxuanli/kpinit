@@ -31,9 +31,9 @@ mv ./initramfs.cpio.gz ../
 """
 GDB_CMD = """
 if type zellij >/dev/null 2>&1; then
-    zellij action new-pane -d right -c -- bash -c "sleep 5; gdb{} -x ../challenge/debug.gdb"
+    zellij action new-pane -d right -c -- bash -c "sleep 5; gdb{} -x ../challenge/debug.gdb -x bps.gdb"
 elif type tmux >/dev/null 2>&1; then
-    tmux split-window -h -c "#{{pane_current_path}}" "bash -c 'sleep 5; gdb{} -x ../challenge/debug.gdb'"
+    tmux split-window -h -c "#{{pane_current_path}}" "bash -c 'sleep 5; gdb{} -x ../challenge/debug.gdb -x bps.gdb'"
 fi
 """
 

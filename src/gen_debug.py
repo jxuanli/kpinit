@@ -64,5 +64,6 @@ def gen_debug():
         else:
             logger.warn("module name not found")
         content += get_ko_gdb(name, ctx.get_path(ctx.VULN_KO))
+    content += "c"
     f = open(ctx.challenge_path("debug.gdb"), "w")
     f.write(content)

@@ -38,6 +38,7 @@ def gen_exploit():
     extract_ko()
     gen_debug()
     gen_exploit_src()
+    open(ctx.exploit_path("bps.gdb"), "w")
     check_config()
 
 
