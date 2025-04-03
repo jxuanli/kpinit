@@ -2,9 +2,24 @@ import os
 from utils import logger, ctx
 from checks import check_qemu_options
 
-qemu_magic = "qemu-system-"
-launch_header = """#!/bin/sh
-
+QEMU_MAGIC = "qemu-system-"
+HEADER = """#!/bin/sh
+"""
+OPTIONS = """
+NOKASLR=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --debug)
+            NOKASLR="nokaslr"
+            ;;
+       *)
+            FILENAME="$1"
+            ;;
+    esac
+    shift
+done
+"""
+CPIO_SCRIPT = """
 gcc ./exploit.c -o ./exploit -static
 mv ./exploit ../challenge/initramfs/exploit
 cp ./init ../challenge/initramfs/init
@@ -13,81 +28,97 @@ find . -print0 |
   cpio --null -ov --format=newc |
   gzip -9 -q >initramfs.cpio.gz
 mv ./initramfs.cpio.gz ../
-
+"""
+GDB_CMD = """
+zellij action new-pane -d right -c -- bash -c "gdb -x ../challenge/script.gdb"
 """
 
-"""
-@command: a valid qemu command 
-@return: list of options, a map with their corresponding values of the qemu command 
-"""
+
 def get_qemu_options(command):
+    """
+    @command: a valid qemu command
+    @return: list of options, a map with their corresponding values of the qemu command
+    """
     parts = command.split()
     tokens = {}
     opts = []
-    i = 1 # skip the qemu bin name 
+    i = 1  # skip the qemu bin name
     while i < len(parts):
-        assert parts[i].startswith('-'), "more qemu args to parse but no option is specified"
+        assert parts[i].startswith("-"), (
+            "more qemu args to parse but no option is specified"
+        )
         option = parts[i][1:]
         i += 1
         assert option not in tokens, "duplicate option seen in qemu command"
         tokens[option] = ""
         opts.append(option)
-        while i < len(parts) and not parts[i].startswith('-'):
+        while i < len(parts) and not parts[i].startswith("-"):
             tokens[option] += parts[i] + " "
             i += 1
+        tokens[option] = tokens[option].strip()
     return opts, tokens
 
-"""
-@command: a valid qemu command 
-@return: the architecture used for the vm  
-"""
+
 def get_qemu_arch(command):
+    """
+    @command: a valid qemu command
+    @return: the architecture used for the vm
+    """
     bin = command.split()[0]
-    assert bin.startswith(qemu_magic)
-    return bin[len(qemu_magic):]
+    assert bin.startswith(QEMU_MAGIC)
+    return bin[len(QEMU_MAGIC) :]
 
 
-"""
-@file_bs: the content of a file (run.sh)
-@return: the qemu command
-"""
 def get_qemu_cmd(file_bs):
-    idx = file_bs.find(qemu_magic)
+    """
+    @file_bs: the content of a file (run.sh)
+    @return: the qemu command
+    """
+    idx = file_bs.find(QEMU_MAGIC)
     assert idx > -1, "can't find qemu_magic in provided file content"
     return file_bs[idx:]
-        
-"""
-@assume: the directory structure in README.md has been created
-@effect: generate the launch.sh file
-            since this parses the run.sh, it will check the interesting qemu options
-            **checks SMAP, SMEP, KPTI, KASLR, and panic_on_oops**
-"""
+
+
 def gen_launch():
+    """
+    @assume: the directory structure in README.md has been created
+    @effect: generate the launch.sh file
+                since this parses the run.sh, it will check the interesting qemu options
+                **checks SMAP, SMEP, KPTI, KASLR, and panic_on_oops**
+    """
     runsh_fpath = ctx.get_path_root(ctx.RUN_SH)
     f = open(runsh_fpath, "r")
-    content = f.read() 
-    qemu_cmd = get_qemu_cmd(content).replace("\\" ," ")
+    content = f.read()
+    qemu_cmd = get_qemu_cmd(content).replace("\\", " ")
     opts, tokens = get_qemu_options(qemu_cmd)
 
-    if "s" not in tokens: # enable debug 
+    if "s" not in tokens:  # enable debug
         tokens["s"] = ""
         opts.append("s")
 
-    # adjust kernel and initrd 
-    tokens["kernel"] = ctx.get_path(ctx.BZIMAGE) + " "
-    tokens["initrd"] = ctx.get_path(ctx.RAMFS) + " "
-    new_content = launch_header
-    new_content += qemu_cmd.split()[0] + " "
+    # adjust kernel and initrd
+
+    if "kernel" not in tokens:
+        logger.error("kernel should be one of the tokens but is not")
+    tokens["kernel"] = ctx.get_path(ctx.BZIMAGE)
+    script = HEADER
+    script += OPTIONS
+    if ctx.get_path(ctx.RAMFS) is not None:
+        tokens["initrd"] = ctx.get_path(ctx.RAMFS)
+        script += CPIO_SCRIPT
+    if ctx.get_path(ctx.QCOW) is not None:
+        tokens["hda"] = ctx.get_path(ctx.QCOW)
+    script += GDB_CMD
+    tokens["append"] = tokens["append"][:-1] + ' $NOKASLR"'
+    script += qemu_cmd.split()[0] + " "
     for option in opts:
         assert option in tokens
-        new_content += "\\\n\t" + "-" + option + " " + tokens[option]
+        script += "\\\n\t" + "-" + option + " " + tokens[option] + " "
 
-    new_content += "\n\n\nsetterm -linewrap on" # TODO:
+    script += "\n\n\nsetterm -linewrap on"  # TODO:
     launch_fpath = ctx.exploit_path("launch.sh")
     f = open(launch_fpath, "w")
-    f.write(new_content)
+    f.write(script)
     os.chmod(launch_fpath, 0o700)
 
     check_qemu_options(tokens)
-
-

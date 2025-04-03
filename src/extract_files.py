@@ -3,6 +3,9 @@ from utils import logger, ctx
 
 
 def decompress_ramfs():
+    if ctx.get(ctx.RAMFS) is None:
+        return
+    shutil.copy2(ctx.get_path_root(ctx.RAMFS), ctx.get_path(ctx.RAMFS))
     ram_path = ctx.challenge_path("initramfs")
     os.mkdir(ram_path)
     archive_path = os.path.join(ram_path, ctx.RAMFS)
@@ -28,6 +31,8 @@ def extract_init():
 def extract_ko():
     if ctx.get_path_root(ctx.VULN_KO) is not None:
         shutil.copy2(ctx.get_path_root(ctx.VULN_KO), ctx.get_path(ctx.VULN_KO))
+        return
+    if ctx.get(ctx.RAMFS) is None:
         return
     mods = []
     for _, _, files in os.walk(ctx.root_path()):
@@ -64,7 +69,6 @@ def extract_context():
     """
     if not ctx.load():
         ctx.set_path(ctx.BZIMAGE, ctx.root_path(ctx.BZIMAGE), True)
-        ctx.set_path(ctx.RUN_SH, ctx.root_path(ctx.RUN_SH), True)
         ctx.set_path(ctx.VMLINUX, ctx.root_path(ctx.VMLINUX))
         ctx.set_path(ctx.CONFIG, ctx.root_path(ctx.CONFIG))
         ctx.set_path(ctx.RAMFS, ctx.root_path(ctx.RAMFS))
@@ -75,6 +79,15 @@ def extract_context():
         for fname in os.listdir(os.getcwd()):
             if fname.endswith(".ko"):
                 ctx.set_path(ctx.VULN_KO, ctx.root_path(fname))
-                break
+            elif fname.endswith(".qcow2"):
+                ctx.set_path(ctx.QCOW, ctx.root_path(fname))
+            elif fname.endswith(".sh"):
+                ctx.set_path(ctx.RUN_SH, ctx.root_path(fname), True)
     logger.important(ctx)
     ctx.check()
+
+
+def extract_qcow():
+    if ctx.get(ctx.QCOW) is None:
+        return
+    shutil.copy2(ctx.get(ctx.QCOW), ctx.get_path(ctx.QCOW))

@@ -38,6 +38,7 @@ class Context:
     LIBKERNEL = "libkernel"
     CONFIG = "kernel_config"
     QCOW = "qcow"
+    LINUX_SRC = "linux source folder"
 
     settings: Dict[str, Setting]
 
@@ -53,6 +54,7 @@ class Context:
             LIBKERNEL,
             CONFIG,
             QCOW,
+            LINUX_SRC,
         ],
     ):
         self.settings = {}  # a map of settings
@@ -80,12 +82,10 @@ class Context:
         if val is None:
             return None
         val = val.split("/")[-1]
-        if setting in [self.RAMFS, self.BZIMAGE, self.VMLINUX]:
+        if setting in [self.RAMFS, self.BZIMAGE, self.QCOW, self.VMLINUX]:
             return self.challenge_path(val)
         elif setting in [self.VULN_KO]:
             return self.exploit_path(val)
-        elif setting in [self.CHALL_SETTING]:
-            return self.workplace_path(val)
         else:
             logger.error(f"Invalid setting {setting}")
 

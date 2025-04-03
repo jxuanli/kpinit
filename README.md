@@ -9,10 +9,11 @@ The aim is to streamline the kernel pwn setup and debug process.
 ```
 chall/
 ├── workplace/ (generated)
-│   ├── settings.json
+│   ├── context.json
 │   ├── challenge/
 │   │   ├── vmlinux
 │   │   ├── bzImage
+│   │   ├── debug.gdb
 │   │   ├── initramfs/
 │   │   └── initramfs.cpio.gz
 │   └── exploit/
@@ -22,7 +23,6 @@ chall/
 │       ├── launch.sh (improved run.sh)
 │       ├── init
 │       ├── vuln.ko
-│       ├── debug.gdb
 │       └── exploit.c (imports functions in util/)
 ├── bzImage
 ├── run.sh
@@ -41,29 +41,29 @@ chall/
 - [ ] generate `./workplace/exploit/launch.sh` (rwx)
   - [x] parse the `qemu` command in `./chall/run.sh`
     - options 
-  - [ ] allow `--debug` mode
-    - `init.stay-root`
+  - [x] allow `--debug` mode
     - `nokaslr` (need to check if it is already an option)
     - `-s`
   - [x] build `./workplace/exploit/exploit.c`
     - include it in `./workplace/challenge/initramfs`
     - recompress `./workplace/challenge/initramfs.cpio.gz` 
+  - [ ] Autostart two panes -- if either zellij or tmux is installed
 - [ ] extract `vmlinux` if not already provided
 - [ ] run checks on `.config` if exists
   - [ ] else if `vmlinux` is not stripped, run checks on that
-- [ ] extract `vuln.ko` if needed 
+- [x] extract `vuln.ko` if needed 
 - [ ] generate `debug.gdb`
   - [x] source `vmlinux`
   - [x] source `libslub`
   - [x] add `vuln.ko` symbols if exists
-  - [ ] toggle `KASLR`
   - [ ] maybe need to check if `vmlinux` is stripped or not in order to add `vuln.ko` symbols 
   - [ ] add debug symbols if `vmlinux` is stripped and `kallsyms` is not disabled 
     - probably requires running qemu commands inside the gdb session
-  - [ ] add useful structures in gdb 
+  - [ ] add useful structures in gdb
+  - [ ] source Linux source code
 - [ ] generate exploit helpers 
   - [ ] converting between asm and their machine code
   - [ ] Makefile
 - [ ] compiles kernel if `.config` is provided
-- [ ] add source code
+- [x] `qcow` file format support (instead of `cpio`)
 

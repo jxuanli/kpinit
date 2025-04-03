@@ -56,9 +56,9 @@ def gen_debug():
             if len(line) < 20 and line.startswith("name=") and line[5:].isalnum():
                 name = line[5:]
         if len(name) > 0:
-            logger.info(f"found module name")
+            logger.info(f"found module {name}")
         else:
             logger.warn("module name not found")
         content += get_ko_gdb(name, ctx.get_path(ctx.VULN_KO))
-    f = open(ctx.exploit_path("debug.gdb"), "w")
+    f = open(ctx.challenge_path("debug.gdb"), "w")
     f.write(content)

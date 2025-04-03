@@ -11,6 +11,7 @@ from extract_files import (
     extract_context,
     extract_init,
     extract_ko,
+    extract_qcow,
 )
 from utils import logger, ctx
 from checks import check_config
@@ -22,9 +23,8 @@ def gen_challenge():
     """
     os.mkdir(ctx.challenge_path())
     shutil.copy2(ctx.get_path_root(ctx.BZIMAGE), ctx.get_path(ctx.BZIMAGE))
-    if ctx.get(ctx.RAMFS) is not None:
-        shutil.copy2(ctx.get_path_root(ctx.RAMFS), ctx.get_path(ctx.RAMFS))
-        decompress_ramfs()
+    decompress_ramfs()
+    extract_qcow()
     extract_vmlinux()
 
 
@@ -34,9 +34,8 @@ def gen_exploit():
     """
     os.mkdir(ctx.exploit_path())
     gen_launch()
-    if ctx.get(ctx.RAMFS) is not None:
-        extract_init()
-        extract_ko()
+    extract_init()
+    extract_ko()
     gen_debug()
     gen_exploit_src()
     check_config()
