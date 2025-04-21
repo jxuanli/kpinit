@@ -70,7 +70,6 @@ def extract_context():
     if not ctx.load():
         ctx.set_path(ctx.BZIMAGE, ctx.root_path(ctx.BZIMAGE), True)
         ctx.set_path(ctx.VMLINUX, ctx.root_path(ctx.VMLINUX))
-        ctx.set_path(ctx.CONFIG, ctx.root_path(ctx.CONFIG))
         ctx.set_path(ctx.RAMFS, ctx.root_path(ctx.RAMFS))
         ctx.set_path(ctx.LIBSLUB, os.path.expanduser("~/Tools/libslub/libslub.py"))
         ctx.set_path(
@@ -88,6 +87,8 @@ def extract_context():
                 ctx.set_path(ctx.RUN_SH, ctx.root_path(fname), True)
             elif "linux" in fname and os.path.isdir(ctx.root_path(fname)):
                 ctx.set_path(ctx.LINUX_SRC, ctx.root_path(fname))
+            elif "config" in fname:
+                ctx.set_path(ctx.CONFIG, ctx.root_path(fname))
     logger.important(ctx)
     ctx.check()
 

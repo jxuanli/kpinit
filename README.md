@@ -52,8 +52,9 @@ chall/
     - support either [`zellij`](https://github.com/zellij-org/zellij) or `tmux`
     - support custom GDB plugin path (this is mainly because the author wants to test out his own pwndbg contributions and it might be different from the one used for userland pwn)
 - [ ] extract `vmlinux` if not already provided
-- [ ] run checks on `.config` if exists
-  - [ ] else if `vmlinux` is not stripped, run checks on that
+  - [ ] compiles kernel if `.config` is provided
+- [x] run checks on `.config` if exists
+  - [x] else if `vmlinux` is not stripped, run checks on that
 - [x] extract `vuln.ko` if needed 
 - [ ] generate `debug.gdb`
   - [x] source `vmlinux`
@@ -68,7 +69,7 @@ chall/
 - [ ] generate exploit helpers 
   - [ ] converting between asm and their machine code
   - [ ] Makefile
-- [ ] compiles kernel if `.config` is provided
 - [x] `qcow` file format support (instead of `cpio`)
 - [ ] enable envvar to specify file paths (for gdb plugins, etc)
 - [ ] unintended?
+- [ ] ngrok

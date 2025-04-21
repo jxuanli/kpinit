@@ -31,9 +31,9 @@ mv ./initramfs.cpio.gz ../
 """
 GDB_CMD = """
 if type zellij >/dev/null 2>&1; then
-    zellij action new-pane -d right -c -- bash -c "sleep 5; gdb{} -x ../challenge/debug.gdb -x bps.gdb"
+    zellij action new-pane -d right -c -- bash -c "sleep 3; gdb {}"
 elif type tmux >/dev/null 2>&1; then
-    tmux split-window -h -c "#{{pane_current_path}}" "bash -c 'sleep 5; gdb{} -x ../challenge/debug.gdb -x bps.gdb'"
+    tmux split-window -h -c "#{{pane_current_path}}" "bash -c 'sleep 3; gdb {}'"
 fi
 """
 
@@ -112,11 +112,10 @@ def gen_launch():
         script += CPIO_SCRIPT
     if ctx.get_path(ctx.QCOW) is not None:
         tokens["hda"] = ctx.get_path(ctx.QCOW)
-    ignore_gdbinit = ctx.get(ctx.GDB_PLUGIN)
-    if ignore_gdbinit is None:
-        ignore_gdbinit = ""
-    else:
-        ignore_gdbinit = " -nx"
+    ignore_gdbinit = ""
+    if ctx.get(ctx.GDB_PLUGIN) is not None:
+        ignore_gdbinit = f"-nx -x {ctx.get(ctx.GDB_PLUGIN)}"
+    ignore_gdbinit += f" -x {ctx.challenge_path('debug.gdb')} -x {ctx.exploit_path('bps.dbg')}"
     script += GDB_CMD.format(ignore_gdbinit, ignore_gdbinit)
     tokens["append"] = tokens["append"][:-1] + ' $NOKASLR"'
     script += qemu_cmd.split()[0] + " "

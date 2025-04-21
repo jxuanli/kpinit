@@ -19,7 +19,7 @@ from checks import check_config
 
 def gen_challenge():
     """
-    generate the workplace/challenge directory
+    generate the workspace/challenge directory
     """
     os.mkdir(ctx.challenge_path())
     shutil.copy2(ctx.get_path_root(ctx.BZIMAGE), ctx.get_path(ctx.BZIMAGE))
@@ -30,7 +30,7 @@ def gen_challenge():
 
 def gen_exploit():
     """
-    generate the workplace/exploit directory
+    generate the workspace/exploit directory
     """
     os.mkdir(ctx.exploit_path())
     gen_launch()
@@ -42,15 +42,15 @@ def gen_exploit():
     check_config()
 
 
-def gen_workplace():
+def gen_workspace():
     """
-    generate the workplace directory as specified in README.md
+    generate the workspace directory as specified in README.md
     """
-    wp_path = ctx.workplace_path()
+    wp_path = ctx.workspace_path()
     if os.path.exists(wp_path):
         assert os.path.isdir(wp_path)
         logger.warn(
-            "removing existing workplace/challenge and workplace/exploit to generate a new one"
+            "removing existing workspace/challenge and workspace/exploit to generate a new one"
         )
         if os.path.isdir(ctx.challenge_path()):
             shutil.rmtree(ctx.challenge_path())
@@ -61,9 +61,9 @@ def gen_workplace():
     extract_context()
     gen_challenge()
     gen_exploit()
-    logger.important("Finished generating workplace")
+    logger.important("Finished generating workspace")
 
 
 if __name__ == "__main__":
-    gen_workplace()
+    gen_workspace()
     logger.important("happy hacking!")

@@ -20,7 +20,7 @@ class Setting:
     def check(self):
         if self.isStrict and self.val is None:
             logger.error(
-                f"the setting for {self.key} is invalid, change workplace/{CONTEXT_FILE} in order to proceed"
+                f"the setting for {self.key} is invalid, change workspace/{CONTEXT_FILE} in order to proceed"
             )
 
 
@@ -99,20 +99,20 @@ class Context:
             name = ""
         return os.path.join(os.getcwd(), name)
 
-    def workplace_path(self, fname=None):
+    def workspace_path(self, fname=None):
         if fname is None:
             fname = ""
-        return self.root_path(os.path.join("workplace", fname))
+        return self.root_path(os.path.join("workspace", fname))
 
     def challenge_path(self, fname=None):
         if fname is None:
             fname = ""
-        return self.workplace_path(os.path.join("challenge", fname))
+        return self.workspace_path(os.path.join("challenge", fname))
 
     def exploit_path(self, fname=None):
         if fname is None:
             fname = ""
-        return self.workplace_path(os.path.join("exploit", fname))
+        return self.workspace_path(os.path.join("exploit", fname))
 
     def get_path_root(self, setting):
         val = self.get(setting)
@@ -124,14 +124,14 @@ class Context:
         """
         return true if can load successfully
         """
-        path = self.workplace_path(CONTEXT_FILE)
+        path = self.workspace_path(CONTEXT_FILE)
         if os.path.exists(path):
             deserialized = json.load(open(path, "r"))
             for key, val in deserialized.items():
                 self.set(key, val)
 
     def persist(self):
-        f = open(self.workplace_path(CONTEXT_FILE), "w")
+        f = open(self.workspace_path(CONTEXT_FILE), "w")
         json.dump(self.serialize(), f, indent=4)
         f.flush()
 
