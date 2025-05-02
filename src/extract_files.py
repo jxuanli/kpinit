@@ -57,11 +57,22 @@ def extract_ko():
 
 
 def extract_vmlinux():
-    if ctx.get_path_root(ctx.VMLINUX) is not None:
-        shutil.copy2(ctx.get_path_root(ctx.VMLINUX), ctx.get_path(ctx.VMLINUX))
+    if ctx.get_path_root(ctx.VMLINUX) is None:
+        raise "not implemented"  # TODO:
+    shutil.copy2(ctx.get_path_root(ctx.VMLINUX), ctx.get_path(ctx.VMLINUX))       
+    try:
+        path = subprocess.run(
+            f"readelf --debug-dump=info {ctx.get_path(ctx.VMLINUX)} | grep -m 1 'DW_AT_comp_dir'",
+            shell=True,
+            capture_output=True,
+            text=True
+        ).stdout.strip().split(" ")[-1]
+        ctx.set(ctx.ORIG_LINUX_PATH, path)
+        logger.info(f"found original linux source path at {path}")
         return
-    assert False, "not implemented"  # TODO:
-
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error: {e}")
+    warn("did not find the path in which the kernel is compiled, perhaps there is not debug symbol (libslub would fail)")
 
 def extract_context():
     """

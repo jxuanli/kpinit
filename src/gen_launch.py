@@ -7,8 +7,12 @@ HEADER = """#!/bin/sh
 """
 OPTIONS = """
 NOKASLR=""
+GDB = ""
 while [ $# -gt 0 ]; do
   case "$1" in
+  --gdb)
+    GDB="yes"
+    ;;
   --debug)
     NOKASLR="nokaslr"
     ;;
@@ -20,8 +24,12 @@ while [ $# -gt 0 ]; do
 done
 """
 CPIO_SCRIPT = """
-gcc ./exploit.c -o ./exploit -static
-mv ./exploit ../challenge/initramfs/exploit
+gcc ./exploit.c ./util/io_helpers.c ./util/general.c ./util/kheap.c -g -o ./exploit -static
+if [ $? -ne 0 ]; then
+  echo "failed on compiling exploit script"
+  exit 1
+fi
+cp ./exploit ../challenge/initramfs/exploit
 cp ./init ../challenge/initramfs/init
 cd ../challenge/initramfs
 find . -print0 |
@@ -30,10 +38,12 @@ find . -print0 |
 mv ./initramfs.cpio.gz ../
 """
 GDB_CMD = """
-if type zellij >/dev/null 2>&1; then
-    zellij action new-pane -d right -c -- bash -c "sleep 3; gdb {}"
-elif type tmux >/dev/null 2>&1; then
-    tmux split-window -h -c "#{{pane_current_path}}" "bash -c 'sleep 3; gdb {}'"
+if [ "$GDB" = "yes" ]; then
+    if type zellij >/dev/null 2>&1; then
+        zellij action new-pane -d right -c -- bash -c "sleep 3; gdb {}"
+    elif type tmux >/dev/null 2>&1; then
+        tmux split-window -h -c "#{{pane_current_path}}" "bash -c 'sleep 3; gdb {}'"
+    fi
 fi
 """
 
@@ -114,8 +124,8 @@ def gen_launch():
         tokens["hda"] = ctx.get_path(ctx.QCOW)
     ignore_gdbinit = ""
     if ctx.get(ctx.GDB_PLUGIN) is not None:
-        ignore_gdbinit = f"-nx -x {ctx.get(ctx.GDB_PLUGIN)}"
-    ignore_gdbinit += f" -x {ctx.challenge_path('debug.gdb')} -x {ctx.exploit_path('bps.dbg')}"
+        ignore_gdbinit = f"-nx "
+    ignore_gdbinit += f"-x {ctx.challenge_path('debug.gdb')}"
     script += GDB_CMD.format(ignore_gdbinit, ignore_gdbinit)
     tokens["append"] = tokens["append"][:-1] + ' $NOKASLR"'
     script += qemu_cmd.split()[0] + " "
