@@ -46,21 +46,26 @@ def gen_workspace():
     """
     generate the workspace directory as specified in README.md
     """
-    wp_path = ctx.workspace_path()
-    if os.path.exists(wp_path):
-        assert os.path.isdir(wp_path)
+    ws_path = ctx.workspace_path()
+    if os.path.exists(ws_path):
+        assert os.path.isdir(ws_path)
         logger.warn(
             "removing existing workspace/challenge and workspace/exploit to generate a new one"
         )
+        if os.path.isfile(ctx.exploit_path("exploit.c")):
+            shutil.copy2(ctx.exploit_path("exploit.c"), ctx.workspace_path("exploit.c"))
         if os.path.isdir(ctx.challenge_path()):
             shutil.rmtree(ctx.challenge_path())
         if os.path.isdir(ctx.exploit_path()):
             shutil.rmtree(ctx.exploit_path())
     else:
-        os.mkdir(wp_path)
+        os.mkdir(ws_path)
     extract_context()
     gen_challenge()
     gen_exploit()
+    # preserves the old exploit
+    if os.path.isfile(ctx.workspace_path("exploit.c")):
+        shutil.copy2(ctx.workspace_path("exploit.c"), ctx.exploit_path("exploit.c"))
     logger.important("Finished generating workspace")
 
 
