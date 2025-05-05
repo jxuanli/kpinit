@@ -30,22 +30,23 @@ if [ $? -ne 0 ]; then
   echo "failed on compiling exploit script"
   exit 1
 fi
-cp ./exploit ../challenge/initramfs/exploit
-cp ./init ../challenge/initramfs/init
-cd ../challenge/initramfs
+fsname="{}"
+cp ./exploit ../challenge/$fsname/exploit
+cp ./init ../challenge/$fsname/init
+cd ../challenge/$fsname
 find . -print0 |
   cpio --null -ov --format=newc |
-  gzip -9 -q >initramfs.cpio.gz
-mv ./initramfs.cpio.gz ../
+  gzip -9 -q >$fsname.cpio.gz
+mv ./$fsname.cpio.gz ../
 cd -
 """
 GDB_CMD = """
 if [ "$GDB" = "yes" ]; then
-    if type zellij >/dev/null 2>&1; then
-        zellij action new-pane -d right -c -- bash -c "sleep 3; gdb {}"
-    elif type tmux >/dev/null 2>&1; then
-        tmux split-window -h -c "#{{pane_current_path}}" "bash -c 'sleep 3; gdb {}'"
-    fi
+  if type zellij >/dev/null 2>&1; then
+    zellij action new-pane -d right -c -- bash -c "sleep 3; gdb {}"
+  elif type tmux >/dev/null 2>&1; then
+    tmux split-window -h -c "#{{pane_current_path}}" "bash -c 'sleep 3; gdb {}'"
+  fi
 fi
 """
 
@@ -121,7 +122,7 @@ def gen_launch():
     script += OPTIONS
     if ctx.get_path(ctx.RAMFS) is not None:
         tokens["initrd"] = ctx.get_path(ctx.RAMFS)
-        script += CPIO_SCRIPT
+        script += CPIO_SCRIPT.format(ctx.fsname())
     if ctx.get_path(ctx.QCOW) is not None:
         tokens["hda"] = ctx.get_path(ctx.QCOW)
     ignore_gdbinit = ""

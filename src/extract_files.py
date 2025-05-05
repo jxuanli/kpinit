@@ -6,11 +6,12 @@ def decompress_ramfs():
     if ctx.get(ctx.RAMFS) is None:
         return
     shutil.copy2(ctx.get_path_root(ctx.RAMFS), ctx.get_path(ctx.RAMFS))
-    ram_path = ctx.challenge_path("initramfs")
+    fsname = ctx.fsname()
+    ram_path = ctx.challenge_path(fsname)
     os.mkdir(ram_path)
-    archive_path = os.path.join(ram_path, ctx.RAMFS)
+    archive_path = os.path.join(ram_path, fsname + ".cpio.gz")
     shutil.copy(ctx.get_path_root(ctx.RAMFS), archive_path)
-    cpio_fpath = ctx.challenge_path(f"{ctx.RAMFS.split('.')[0]}/initramfs.cpio")
+    cpio_fpath = os.path.join(ram_path, fsname + ".cpio")
     prev = os.getcwd()
     os.chdir(ram_path)
     subprocess.run(["gunzip", archive_path])
@@ -21,7 +22,7 @@ def decompress_ramfs():
 
 
 def extract_init():
-    init_fpath = ctx.challenge_path("initramfs/init")
+    init_fpath = ctx.challenge_path(f"{ctx.fsname()}/init")
     if os.path.isfile(init_fpath):
         shutil.copy(init_fpath, ctx.exploit_path("init"))
     else:

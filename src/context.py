@@ -29,7 +29,7 @@ class Context:
     represents a kernel pwn challenge context
     """
 
-    RAMFS = "initramfs.cpio.gz"
+    RAMFS = "cpio"
     BZIMAGE = "bzImage"
     RUN_SH = "run.sh"
     VMLINUX = "vmlinux"
@@ -136,6 +136,9 @@ class Context:
         f = open(self.workspace_path(CONTEXT_FILE), "w")
         json.dump(self.serialize(), f, indent=4)
         f.flush()
+
+    def fsname(self):
+        return os.path.basename(self.get_path(self.RAMFS)).split(".")[0]
 
     def check(self):
         for setting in self.settings.values():
