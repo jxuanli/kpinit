@@ -22,9 +22,10 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
+
+gcc ./exploit.c ./util/io_helpers.c ./util/general.c ./util/kheap.c -g -o ./exploit -static
 """
 CPIO_SCRIPT = """
-gcc ./exploit.c ./util/io_helpers.c ./util/general.c ./util/kheap.c -g -o ./exploit -static
 if [ $? -ne 0 ]; then
   echo "failed on compiling exploit script"
   exit 1
@@ -36,6 +37,7 @@ find . -print0 |
   cpio --null -ov --format=newc |
   gzip -9 -q >initramfs.cpio.gz
 mv ./initramfs.cpio.gz ../
+cd -
 """
 GDB_CMD = """
 if [ "$GDB" = "yes" ]; then

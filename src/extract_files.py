@@ -35,10 +35,12 @@ def extract_ko():
     if ctx.get(ctx.RAMFS) is None:
         return
     mods = []
-    for _, _, files in os.walk(ctx.root_path()):
+    for dir, _, files in os.walk(ctx.root_path()):
         for file in files:
-            if file.endswith(".ko"):
-                mods.append(file)
+            if file.endswith(".ko") and file not in mods:
+                mods.append(os.path.join(dir, file))
+
+    logger.important(mods)
     mod = None
     if len(mods) > 0:
         mod = mods[0]
@@ -49,7 +51,7 @@ def extract_ko():
                 if mod_substr in m:
                     mod = m
                     break
-    if mod is None or not os.path.exists(ctx.ctx.root_path(mod)):
+    if mod is None or not os.path.exists(mod):
         logger.warn("no kernel loadable modules found")
         return
     ctx.set(ctx.VULN_KO, mod)
@@ -57,8 +59,24 @@ def extract_ko():
 
 
 def extract_vmlinux():
+    out = b""
     if ctx.get_path_root(ctx.VMLINUX) is None:
-        raise "not implemented"  # TODO:
+        vmlinux_path = ctx.root_path("vmlinux")
+        if shutil.which('vmlinux-to-elf') is not None:
+            out = subprocess.run(['vmlinux-to-elf', ctx.get_path(ctx.BZIMAGE), vmlinux_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout            
+            if b"Successfully wrote the new ELF kernel" in out:
+                logger.info("extracted vmlinux with vmlinux-to-elf")
+                ctx.set_path(ctx.VMLINUX, vmlinux_path)
+    if ctx.get_path_root(ctx.VMLINUX) is None:
+        # fallback
+        logger.warn(f"extracting vmlinux with vmlinux-to-elf failed: {out}")
+        out = subprocess.check_output([os.path.join(os.path.dirname(os.path.abspath(__file__)), "extract-vmlinux"), ctx.get_path(ctx.BZIMAGE)])
+        vmlinux_path = ctx.root_path("vmlinux")
+        f = open(vmlinux_path, "wb")
+        f.write(out)
+        ctx.set_path(ctx.VMLINUX, vmlinux_path)
+        logger.info("extracted vmlinux with extract-vmlinux")
+
     shutil.copy2(ctx.get_path_root(ctx.VMLINUX), ctx.get_path(ctx.VMLINUX))       
     try:
         path = subprocess.run(
@@ -67,12 +85,13 @@ def extract_vmlinux():
             capture_output=True,
             text=True
         ).stdout.strip().split(" ")[-1]
-        ctx.set(ctx.ORIG_LINUX_PATH, path)
-        logger.info(f"found original linux source path at {path}")
-        return
+        if path and len(path) > 0:
+            ctx.set(ctx.ORIG_LINUX_PATH, path)
+            logger.info(f"found original linux source path at {path}")
+            return
     except subprocess.CalledProcessError as e:
         logger.error(f"Error: {e}")
-    warn("did not find the path in which the kernel is compiled, perhaps there is not debug symbol (libslub would fail)")
+    logger.warn("did not find the path in which the kernel is compiled")
 
 def extract_context():
     """
@@ -81,7 +100,6 @@ def extract_context():
     if not ctx.load():
         ctx.set_path(ctx.BZIMAGE, ctx.root_path(ctx.BZIMAGE), True)
         ctx.set_path(ctx.VMLINUX, ctx.root_path(ctx.VMLINUX))
-        ctx.set_path(ctx.RAMFS, ctx.root_path(ctx.RAMFS))
         ctx.set_path(ctx.LIBSLUB, os.path.expanduser("~/Tools/libslub/libslub.py"))
         ctx.set_path(
             ctx.LIBKERNEL, os.path.expanduser("~/Tools/libkernel/libkernel.py")
@@ -98,6 +116,8 @@ def extract_context():
                 ctx.set_path(ctx.RUN_SH, ctx.root_path(fname), True)
             elif "linux" in fname and os.path.isdir(ctx.root_path(fname)):
                 ctx.set_path(ctx.LINUX_SRC, ctx.root_path(fname))
+            elif "cpio" in fname:
+                ctx.set_path(ctx.RAMFS, ctx.root_path(fname))
             elif "config" in fname:
                 ctx.set_path(ctx.CONFIG, ctx.root_path(fname))
     logger.important(ctx)

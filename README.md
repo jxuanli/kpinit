@@ -18,13 +18,12 @@ chall/
 │   │   └── initramfs.cpio.gz
 │   └── exploit/
 │       ├── util/
-│       │   ├── common.h
-│       │   └── common.c
+│       │   └── (utility files)
 │       ├── launch.sh (improved run.sh)
 │       ├── bps.gdb 
 │       ├── init
 │       ├── vuln.ko
-│       └── exploit.c (imports functions in util/)
+│       └── exploit.c (imports files in util/)
 ├── bzImage
 ├── run.sh
 ├── initramfs.cpio.gz
@@ -51,16 +50,17 @@ chall/
   - [x] Autostart two panes
     - support either [`zellij`](https://github.com/zellij-org/zellij) or `tmux`
     - support custom GDB plugin path (this is mainly because the author wants to test out his own pwndbg contributions and it might be different from the one used for userland pwn)
-- [ ] extract `vmlinux` if not already provided
-  - [ ] compiles kernel if `.config` is provided
+  - [x] Regeneration preserves old `exploit.c`
+- [x] extract `vmlinux` if not already provided
 - [x] run checks on `.config` if exists
   - [x] else if `vmlinux` is not stripped, run checks on that
 - [x] extract `vuln.ko` if needed 
 - [ ] generate `debug.gdb`
   - [x] source `vmlinux`
+    - load `vmlinux` at the correct KASLR offset
   - [x] source `libslub`
   - [x] add `vuln.ko` symbols if exists
-  - [ ] maybe need to check if `vmlinux` is stripped or not in order to add `vuln.ko` symbols 
+  - [x] maybe need to check if `vmlinux` is stripped or not in order to add `vuln.ko` symbols 
   - [ ] add debug symbols if `vmlinux` is stripped and `kallsyms` is not disabled 
     - probably requires running qemu commands inside the gdb session
   - [ ] add useful structures in gdb
@@ -73,3 +73,10 @@ chall/
 - [ ] enable envvar to specify file paths (for gdb plugins, etc)
 - [ ] unintended?
 - [ ] ngrok
+
+
+### [`vmlinux-to-elf`](https://github.com/marin-m/vmlinux-to-elf) installation
+```bash
+sudo apt -y install python3-pip liblzo2-dev
+pip3 install --upgrade git+https://github.com/marin-m/vmlinux-to-elf
+```
