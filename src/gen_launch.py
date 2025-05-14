@@ -127,8 +127,10 @@ def gen_launch():
         tokens["hda"] = ctx.get_path(ctx.QCOW)
     ignore_gdbinit = ""
     if ctx.get(ctx.GDB_PLUGIN) is not None:
-        ignore_gdbinit = f"-nx "
-    ignore_gdbinit += f"-x {ctx.challenge_path('debug.gdb')}"
+        ignore_gdbinit += f" -nx "
+    ignore_gdbinit += f"-ix {ctx.challenge_path('debug.gdb')}"
+    if ctx.get(ctx.GDB_PLUGIN) is not None:
+        ignore_gdbinit += f" -nx "
     script += GDB_CMD.format(ignore_gdbinit, ignore_gdbinit)
     tokens["append"] = tokens["append"][:-1] + ' $NOKASLR"'
     script += qemu_cmd.split()[0] + " "
