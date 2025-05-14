@@ -22,11 +22,12 @@ def decompress_ramfs():
 
 
 def extract_init():
-    init_fpath = ctx.challenge_path(f"{ctx.fsname()}/init")
-    if os.path.isfile(init_fpath):
-        shutil.copy(init_fpath, ctx.exploit_path("init"))
-    else:
-        logger.warn("did not find init file")
+    if ctx.get_path(ctx.RAMFS) is not None:
+        init_fpath = ctx.challenge_path(f"{ctx.fsname()}/init")
+        if os.path.isfile(init_fpath):
+            shutil.copy(init_fpath, ctx.exploit_path("init"))
+        else:
+            logger.warn("did not find init file")
 
 
 def extract_ko():
@@ -99,8 +100,6 @@ def extract_context():
     generate settings.json file if does not exist, otherwise use the existing settings
     """
     if not ctx.load():
-        ctx.set_path(ctx.BZIMAGE, ctx.root_path(ctx.BZIMAGE), True)
-        ctx.set_path(ctx.VMLINUX, ctx.root_path(ctx.VMLINUX))
         ctx.set_path(ctx.LIBSLUB, os.path.expanduser("~/Tools/libslub/libslub.py"))
         ctx.set_path(
             ctx.LIBKERNEL, os.path.expanduser("~/Tools/libkernel/libkernel.py")
@@ -111,7 +110,11 @@ def extract_context():
         for fname in os.listdir(os.getcwd()):
             if fname.endswith(".ko"):
                 ctx.set_path(ctx.VULN_KO, ctx.root_path(fname))
-            elif fname.endswith(".qcow2"):
+            elif "bzImage" in fname or "vmlinuz" in fname:
+                ctx.set_path(ctx.BZIMAGE, ctx.root_path(fname), True)
+            elif "vmlinux" in fname:
+                ctx.set_path(ctx.VMLINUX, ctx.root_path(fname))
+            elif fname.endswith(".qcow2") or fname.endswith(".img"):
                 ctx.set_path(ctx.QCOW, ctx.root_path(fname))
             elif fname.endswith(".sh"):
                 ctx.set_path(ctx.RUN_SH, ctx.root_path(fname), True)
@@ -126,6 +129,7 @@ def extract_context():
 
 
 def extract_qcow():
-    if ctx.get(ctx.QCOW) is None:
+    imgpath = ctx.get(ctx.QCOW)
+    if imgpath is None:
         return
-    shutil.copy2(ctx.get(ctx.QCOW), ctx.get_path(ctx.QCOW))
+    shutil.copy2(imgpath, ctx.exploit_path())

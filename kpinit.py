@@ -21,7 +21,6 @@ def gen_challenge():
     """
     generate the workspace/challenge directory
     """
-    os.mkdir(ctx.challenge_path())
     shutil.copy2(ctx.get_path_root(ctx.BZIMAGE), ctx.get_path(ctx.BZIMAGE))
     decompress_ramfs()
     extract_qcow()
@@ -32,7 +31,6 @@ def gen_exploit():
     """
     generate the workspace/exploit directory
     """
-    os.mkdir(ctx.exploit_path())
     gen_launch()
     extract_init()
     extract_ko()
@@ -60,6 +58,8 @@ def gen_workspace():
             shutil.rmtree(ctx.exploit_path())
     else:
         os.mkdir(ws_path)
+    os.mkdir(ctx.challenge_path())
+    os.mkdir(ctx.exploit_path())
     extract_context()
     gen_challenge()
     gen_exploit()

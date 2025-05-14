@@ -111,7 +111,12 @@ class SlabMergeDefaultConfig(KernelConfig):
         super().__init__("CONFIG_SLAB_MERGE_DEFAULT", "no cg cache", "cg cache exists")
 
     def dyn_check_vmlinux(self, symbols):
-        out = self.gdb_exec("p/x (long)slab_nomerge")
+        out = None
+        try:
+            out = self.gdb_exec("p/x (long)slab_nomerge")
+        except:
+            logger.warn(f"{self.name} is not checked")
+            return
         if "$1 = 0x0" in out:
             self.__warn__()
         else:
