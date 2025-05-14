@@ -4,11 +4,27 @@ WIP, heavily inspired by [kernelinit](https://github.com/Myldero/kernelinit)
 
 The aim is to streamline the kernel pwn setup and debug process. 
 
+### Installation
+
+```bash
+git clone https://github.com/jxuanli/kpinit.git
+echo "alias kpinit='python3 $PWD/kpinit/kpinit.py'" >>~/.bash_aliases
+```
+
+### Usage
+```bash
+cd $CHALLENG_DIR
+kpinit
+cd workspace/exploit
+./launch.sh [--gdb] [--nokaslr]
+```
+
+
 ### Features
 - [x] create a new directory structure: 
 ```
 chall/
-├── workplace/ (generated)
+├── workspace/ (generated)
 │   ├── context.json
 │   ├── challenge/
 │   │   ├── vmlinux
@@ -31,22 +47,22 @@ chall/
 ├── (optional) vmlinux
 └── (optional) vuln.ko
 ```
-- [x] generate `./workplace/settings.json` to get the names of provided files
+- [x] generate `./workspace/settings.json` to get the names of provided files
   - [x] auto-generation
   - [x] allow custom `settings.json`
-- [x] generate `./workplace/challenge`
+- [x] generate `./workspace/challenge`
   - [x] find and cp `./bzImage ./initramfs.cpio.gz`
   - [x] decompress `./initramfs.cpio.gz`
   - [x] extract `init`
-- [x] generate `./workplace/exploit/launch.sh` (rwx)
+- [x] generate `./workspace/exploit/launch.sh` (rwx)
   - [x] parse the `qemu` command in `./chall/run.sh`
     - options 
   - [x] allow `--debug` mode
     - `nokaslr` (need to check if it is already an option)
     - `-s`
-  - [x] build `./workplace/exploit/exploit.c`
-    - include it in `./workplace/challenge/initramfs`
-    - recompress `./workplace/challenge/initramfs.cpio.gz` 
+  - [x] build `./workspace/exploit/exploit.c`
+    - include it in `./workspace/challenge/initramfs`
+    - recompress `./workspace/challenge/initramfs.cpio.gz` 
   - [x] Autostart two panes
     - support either [`zellij`](https://github.com/zellij-org/zellij) or `tmux`
     - support custom GDB plugin path (this is mainly because the author wants to test out his own pwndbg contributions and it might be different from the one used for userland pwn)
