@@ -31,13 +31,13 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 fsname="{}"
+compressedfs="{}"
 cp ./exploit ../challenge/$fsname/exploit
 cp ./init ../challenge/$fsname/init
 cd ../challenge/$fsname
 find . -print0 |
   cpio --null -ov --format=newc |
-  gzip -9 -q >$fsname.cpio.gz
-mv ./$fsname.cpio.gz ../
+  gzip -9 -q >$compressedfs
 cd -
 """
 GDB_CMD = """
@@ -74,7 +74,8 @@ def get_qemu_options(command):
         elif option == "hda":
             token = ctx.get_path(ctx.QCOW)
         elif option == "append":
-            token += " $NOKASLR"
+            token = token.replace("\'", "").replace("\"", "")
+            token = f'"{token} $NOKASLR"'
         elif option == "initrd":
             token = ctx.get_path(ctx.RAMFS)
         opts.append((option, token.strip()))
@@ -130,7 +131,7 @@ def gen_launch():
     script = HEADER
     script += OPTIONS
     if ctx.get_path(ctx.RAMFS) is not None:
-        script += CPIO_SCRIPT.format(ctx.fsname())
+        script += CPIO_SCRIPT.format(ctx.fsname(), ctx.get_path(ctx.RAMFS))
     ignore_gdbinit = ""
     if ctx.get(ctx.GDB_PLUGIN) is not None:
         ignore_gdbinit += f" -nx "

@@ -41,8 +41,6 @@ def extract_ko():
         for file in files:
             if file.endswith(".ko") and file not in mods:
                 mods.append(os.path.join(dir, file))
-
-    logger.important(mods)
     mod = None
     if len(mods) > 0:
         mod = mods[0]
