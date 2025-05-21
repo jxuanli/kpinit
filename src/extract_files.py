@@ -120,7 +120,7 @@ def extract_context():
                 ctx.set_path(ctx.RUN_SH, ctx.root_path(fname), True)
             elif "linux" in fname and os.path.isdir(ctx.root_path(fname)):
                 ctx.set_path(ctx.LINUX_SRC, ctx.root_path(fname))
-            elif "cpio" in fname:
+            elif "cpio" in fname or "gz" in fname:
                 ctx.set_path(ctx.RAMFS, ctx.root_path(fname))
             elif "config" in fname:
                 ctx.set_path(ctx.CONFIG, ctx.root_path(fname))
@@ -132,4 +132,4 @@ def extract_qcow():
     imgpath = ctx.get(ctx.QCOW)
     if imgpath is None:
         return
-    shutil.copy2(imgpath, ctx.exploit_path())
+    shutil.copy2(imgpath, ctx.challenge_path())

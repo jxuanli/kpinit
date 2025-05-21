@@ -82,7 +82,6 @@ def gen_debug():
         if ctx.get(ctx.ORIG_LINUX_PATH) is not None:
             content += f"set substitute-path {ctx.get(ctx.ORIG_LINUX_PATH)} {ctx.get(ctx.LINUX_SRC)}\n"
     content += f"add-symbol-file {ctx.exploit_path('exploit')}\n"
-    content += f"source {ctx.exploit_path('bps.gdb')}\n"
     out = subprocess.run(["readelf", "-SW", ctx.get_path(ctx.VMLINUX)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout            
     if b"debug_info" in out:
         if ctx.get(ctx.LIBSLUB) is not None:
@@ -107,6 +106,7 @@ def gen_debug():
     else:
         logger.warn("no debug info 😢")
 
+    content += f"source {ctx.exploit_path('bps.gdb')}\n"
     content += finished_msg
     f = open(ctx.challenge_path("debug.gdb"), "w")
     f.write(content)

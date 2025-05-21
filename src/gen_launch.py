@@ -57,7 +57,6 @@ def get_qemu_options(command):
     @return: list of options, a map with their corresponding values of the qemu command
     """
     parts = command.split()
-    tokens = {}
     opts = []
     i = 1  # skip the qemu bin name
     while i < len(parts):
@@ -65,15 +64,21 @@ def get_qemu_options(command):
             "more qemu args to parse but no option is specified"
         )
         option = parts[i][1:]
+        token = ""
         i += 1
-        assert option not in tokens, "duplicate option seen in qemu command"
-        tokens[option] = ""
-        opts.append(option)
         while i < len(parts) and not parts[i].startswith("-"):
-            tokens[option] += parts[i] + " "
+            token += parts[i] + " "
             i += 1
-        tokens[option] = tokens[option].strip()
-    return opts, tokens
+        if option == "kernel":
+            token = ctx.get_path(ctx.BZIMAGE)
+        elif option == "hda":
+            token = ctx.get_path(ctx.QCOW)
+        elif option == "append":
+            token += " $NOKASLR"
+        elif option == "initrd":
+            token = ctx.get_path(ctx.RAMFS)
+        opts.append((option, token.strip()))
+    return opts
 
 
 def get_qemu_arch(command):
@@ -96,6 +101,19 @@ def get_qemu_cmd(file_bs):
     return file_bs[idx:]
 
 
+def mod_qemu_options(options):
+    has_kernel, has_debug = False, False
+    for opt, _ in options:
+        if opt == "kernel":
+            has_kernel = True
+        if opt == "s":
+            has_debug = True
+    if not has_kernel:
+        logger.error("kernel should be one of the tokens but is not")
+    if not has_debug:
+        options.append(("s", ""))
+
+
 def gen_launch():
     """
     @assume: the directory structure in README.md has been created
@@ -107,24 +125,12 @@ def gen_launch():
     f = open(runsh_fpath, "r")
     content = f.read()
     qemu_cmd = get_qemu_cmd(content).replace("\\", " ")
-    opts, tokens = get_qemu_options(qemu_cmd)
-
-    if "s" not in tokens:  # enable debug
-        tokens["s"] = ""
-        opts.append("s")
-
-    # adjust kernel and initrd
-
-    if "kernel" not in tokens:
-        logger.error("kernel should be one of the tokens but is not")
-    tokens["kernel"] = ctx.get_path(ctx.BZIMAGE)
+    opts = get_qemu_options(qemu_cmd)
+    mod_qemu_options(opts)
     script = HEADER
     script += OPTIONS
     if ctx.get_path(ctx.RAMFS) is not None:
-        tokens["initrd"] = ctx.get_path(ctx.RAMFS)
         script += CPIO_SCRIPT.format(ctx.fsname())
-    if ctx.get_path(ctx.QCOW) is not None:
-        tokens["hda"] = ctx.get_path(ctx.QCOW)
     ignore_gdbinit = ""
     if ctx.get(ctx.GDB_PLUGIN) is not None:
         ignore_gdbinit += f" -nx "
@@ -132,11 +138,9 @@ def gen_launch():
     if ctx.get(ctx.GDB_PLUGIN) is not None:
         ignore_gdbinit += f" -nx "
     script += GDB_CMD.format(ignore_gdbinit, ignore_gdbinit)
-    tokens["append"] = tokens["append"][:-1] + ' $NOKASLR"'
     script += qemu_cmd.split()[0] + " "
-    for option in opts:
-        assert option in tokens
-        script += "\\\n\t" + "-" + option + " " + tokens[option] + " "
+    for option, token in opts:
+        script += "\\\n\t" + "-" + option + " " + token + " "
 
     script += "\n\n\nsetterm -linewrap on"  # TODO:
     launch_fpath = ctx.exploit_path("launch.sh")
@@ -144,4 +148,4 @@ def gen_launch():
     f.write(script)
     os.chmod(launch_fpath, 0o700)
 
-    check_qemu_options(tokens)
+    check_qemu_options(opts)

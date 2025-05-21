@@ -13,7 +13,7 @@ echo "alias kpinit='python3 $PWD/kpinit/kpinit.py'" >>~/.bash_aliases
 
 ### Usage
 ```bash
-cd $CHALLENG_DIR
+cd <CHALLENGE_DIR>
 kpinit
 cd workspace/exploit
 ./launch.sh [--gdb] [--nokaslr]
@@ -71,23 +71,38 @@ chall/
 - [x] run checks on `.config` if exists
   - [x] else if `vmlinux` is not stripped, run checks on that
 - [x] extract `vuln.ko` if needed 
-- [ ] generate `debug.gdb`
+- [-] generate `debug.gdb`
   - [x] source `vmlinux`
     - load `vmlinux` at the correct KASLR offset
   - [x] source `libslub`
   - [x] add `vuln.ko` symbols if exists
   - [x] maybe need to check if `vmlinux` is stripped or not in order to add `vuln.ko` symbols 
-  - [ ] add debug symbols if `vmlinux` is stripped and `kallsyms` is not disabled 
+  - [-] add debug symbols if `bzImage`/`vmlinux` is stripped and `kallsyms` is not disabled (I might implement this in pwndbg instead)
     - probably requires running qemu commands inside the gdb session
-  - [ ] add useful structures in gdb
   - [x] source Linux source code
   - [x] support custom breakpoints
-- [ ] generate exploit helpers 
-  - [ ] converting between asm and their machine code
+- [ ] generate exploit helpers
+  - [-] io helpers
+    - `info`, `warn`, `error`, `important`, `input`, etc (similar to those in pwntools)
+    - [-] cyclic
+  - [-] general exploit helpers
+    - retspill
+    - `modprobe_path`
+    - `core_dump`
+    - [-] slubstick
+    - [-] microarch
+  - [ ] kheap spray helpers
+    - `GFP_KERNEL_ACCOUNT`
+      - `pipe_buffer`
+      - `msg_msgseg` (`msg_msg` got its own dedicated cache as of the latest kernel)
+      - `simple_xattr`
+    - `GFP_KERNEL`
+      - `unix_address`
+      - `poll_list`
   - [ ] Makefile
 - [x] `qcow` file format support (instead of `cpio`)
-- [ ] enable envvar to specify file paths (for gdb plugins, etc)
-- [ ] unintended?
+- [ ] support environment variables for specifying file paths (for gdb plugins, etc)
+- [ ] unintended
 - [ ] ngrok
 
 
