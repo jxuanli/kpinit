@@ -52,7 +52,8 @@ chall/
 │       ├── util/
 │       │   └── (utility files)
 │       ├── launch.sh (improved run.sh)
-│       ├── bps.gdb 
+│       ├── serve.sh
+│       ├── bps.gdb
 │       ├── init
 │       ├── vuln.ko
 │       └── exploit.c (imports files in util/)
@@ -118,7 +119,8 @@ chall/
   - [ ] Makefile
 - [x] `qcow` file format support (instead of `cpio`)
 - [ ] support environment variables for specifying file paths (for gdb plugins, etc)
-- [ ] ngrok
+- [x] automatic exploit file serving script
+  - the localhost can then be exposed/tunneled with tools such as `ngrok`
 
 
 ### [`vmlinux-to-elf`](https://github.com/marin-m/vmlinux-to-elf) installation
