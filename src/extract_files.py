@@ -45,6 +45,7 @@ def extract_ko():
     if len(mods) > 0:
         mod = mods[0]
         if len(mods) > 1:
+            logger.info(f"modules: {mods}")
             logger.warn("detected multiple loadable modules, select which one ❱")
             mod_substr = input()
             for m in mods:

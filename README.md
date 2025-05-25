@@ -2,7 +2,23 @@
 
 WIP, heavily inspired by [kernelinit](https://github.com/Myldero/kernelinit)
 
-The aim is to streamline the kernel pwn setup and debug process. 
+One of the most barring aspect of kernel pwning from my experience is its difficulty in setting up an efficient debugging environment. Therefore, the aim of this project is to streamline the kernel pwning setup and debugging process.
+
+### Design philosophies
+
+A kernel pwning workspace
+- should be localized
+  - generated files should be easy to remove and regenerate for maintaining a clean workspace
+  - should retain copies of provided files in case a workspace needs to be regenerated
+- should require minimal manual setup
+  - should work without modifications of provided files under most circumstances
+  - e.g. works with only a kernel image, a system directory archive or disk image file, and a script that contains a QEMU command
+- should be robust against slight variations of file names and formats
+  - e.g. files from different CTF challenges might vary in formats
+- directories/files should be organized and generated to accelerate exploit development
+  - should enable fast experimentations on various kernel exploits
+- should be as customizable as possible
+  - all files including those responsible for performing static checks and generating helper files are changeable
 
 ### Installation
 
@@ -102,7 +118,6 @@ chall/
   - [ ] Makefile
 - [x] `qcow` file format support (instead of `cpio`)
 - [ ] support environment variables for specifying file paths (for gdb plugins, etc)
-- [ ] unintended
 - [ ] ngrok
 
 
