@@ -116,6 +116,7 @@ chall/
     - `GFP_KERNEL`
       - `unix_address`
       - `poll_list`
+  - [ ] bpf
   - [ ] Makefile
 - [x] `qcow` file format support (instead of `cpio`)
 - [ ] support environment variables for specifying file paths (for gdb plugins, etc)

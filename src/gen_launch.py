@@ -1,6 +1,7 @@
 import os
 from utils import logger, ctx
 from checks import check_qemu_options
+import shutil
 
 QEMU_MAGIC = "qemu-system-"
 HEADER = """#!/bin/sh
@@ -60,9 +61,8 @@ def get_qemu_options(command):
     opts = []
     i = 1  # skip the qemu bin name
     while i < len(parts):
-        assert parts[i].startswith("-"), (
-            "more qemu args to parse but no option is specified"
-        )
+        if not parts[i].startswith("-"):
+            return None
         option = parts[i][1:]
         token = ""
         i += 1
@@ -123,10 +123,15 @@ def gen_launch():
                 **checks SMAP, SMEP, KPTI, KASLR, and panic_on_oops**
     """
     runsh_fpath = ctx.get_path_root(ctx.RUN_SH)
+    launch_fpath = ctx.exploit_path("launch.sh")
     f = open(runsh_fpath, "r")
     content = f.read()
     qemu_cmd = get_qemu_cmd(content).replace("\\", " ")
     opts = get_qemu_options(qemu_cmd)
+    if opts is None:
+        logger.warn("Unexpected boot script format detected.")
+        shutil.copy2(runsh_fpath, launch_fpath)
+        return
     mod_qemu_options(opts)
     script = HEADER
     script += OPTIONS
@@ -144,7 +149,6 @@ def gen_launch():
         script += "\\\n\t" + "-" + option + " " + token + " "
 
     script += "\n\n\nsetterm -linewrap on"  # TODO:
-    launch_fpath = ctx.exploit_path("launch.sh")
     f = open(launch_fpath, "w")
     f.write(script)
     os.chmod(launch_fpath, 0o700)
