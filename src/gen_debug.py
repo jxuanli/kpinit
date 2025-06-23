@@ -37,7 +37,7 @@ kbase = 0
 vmlinux = "{}"
 try:
   kbase = int(gdb.execute("kbase", to_string=True).strip().split(" ")[-1][:18], 16)
-  print(hex(kbase))
+  print(f"found kbase: {hex(kbase)}")
   offset = kbase - 0xffffffff81000000
   gdb.execute(f"symbol-file {{vmlinux}} -o {{hex(offset)}}")
 except:
@@ -84,8 +84,6 @@ def gen_debug():
     content += f"add-symbol-file {ctx.exploit_path('exploit')}\n"
     out = subprocess.run(["readelf", "-SW", ctx.get_path(ctx.VMLINUX)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout            
     if b"debug_info" in out:
-        if ctx.get(ctx.LIBSLUB) is not None:
-            content += libslub_template.format(ctx.get(ctx.LIBSLUB))
         if ctx.get(ctx.VULN_KO) is not None:
             out = (
                 subprocess.check_output(

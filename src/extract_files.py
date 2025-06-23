@@ -64,6 +64,7 @@ def extract_vmlinux():
     if ctx.get_path_root(ctx.VMLINUX) is None:
         vmlinux_path = ctx.root_path("vmlinux")
         if shutil.which('vmlinux-to-elf') is not None:
+            logger.info("Extracting vmlinux...")
             out = subprocess.run(['vmlinux-to-elf', ctx.get_path(ctx.BZIMAGE), vmlinux_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout            
             if b"Successfully wrote the new ELF kernel" in out:
                 logger.info("extracted vmlinux with vmlinux-to-elf")
