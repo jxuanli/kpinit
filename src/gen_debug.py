@@ -74,8 +74,6 @@ def gen_debug():
         content += "set show-flag on\n"
         content += "set exception-debugger on\n"
     content += "target remote localhost:1234\n"
-    if ctx.get(ctx.LIBKERNEL) is not None:
-        content += f"source {ctx.get(ctx.LIBKERNEL)}\n"
     content += kbase_template.format(ctx.get(ctx.VMLINUX))
     if ctx.get(ctx.LINUX_SRC) is not None:
         content += f"set substitute-path ./ {ctx.get(ctx.LINUX_SRC)}\n"

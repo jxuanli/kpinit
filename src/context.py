@@ -35,7 +35,6 @@ class Context:
     VMLINUX = "vmlinux"
     VULN_KO = "vuln"
     LIBSLUB = "libslub"
-    LIBKERNEL = "libkernel"
     CONFIG = "kernel_config"
     QCOW = "qcow"
     LINUX_SRC = "linux source folder"
@@ -53,7 +52,6 @@ class Context:
             VMLINUX,
             VULN_KO,
             LIBSLUB,
-            LIBKERNEL,
             CONFIG,
             QCOW,
             LINUX_SRC,

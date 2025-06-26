@@ -102,9 +102,6 @@ def extract_context():
     if not ctx.load():
         ctx.set_path(ctx.LIBSLUB, os.path.expanduser("~/Tools/libslub/libslub.py"))
         ctx.set_path(
-            ctx.LIBKERNEL, os.path.expanduser("~/Tools/libkernel/libkernel.py")
-        )
-        ctx.set_path(
             ctx.GDB_PLUGIN, os.path.expanduser("~/Documents/pwndbg/gdbinit.py")
         )
         for fname in os.listdir(os.getcwd()):
