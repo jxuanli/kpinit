@@ -1,4 +1,5 @@
 import os
+import subprocess
 from utils import logger, ctx
 from checks import check_qemu_options
 import shutil
@@ -44,9 +45,9 @@ cd -
 GDB_CMD = """
 if [ "$GDB" = "yes" ]; then
   if type zellij >/dev/null 2>&1; then
-    zellij action new-pane -d right -c -- bash -c "sleep 3; gdb {}"
+    zellij action new-pane -d right -c -- bash -c "sleep 3; {}"
   elif type tmux >/dev/null 2>&1; then
-    tmux split-window -h -c "#{{pane_current_path}}" "bash -c 'sleep 3; gdb {}'"
+    tmux split-window -h -c "#{{pane_current_path}}" "bash -c 'sleep 3; {}'"
   fi
 fi
 """
@@ -137,7 +138,8 @@ def gen_launch():
     script += OPTIONS
     if ctx.get_path(ctx.RAMFS) is not None:
         script += CPIO_SCRIPT.format(ctx.fsname(), ctx.get_path(ctx.RAMFS))
-    ignore_gdbinit = ""
+    vmlinux_info = subprocess.run(['file', ctx.get_path(ctx.VMLINUX)], stdout=subprocess.PIPE, text=True).stdout
+    ignore_gdbinit = "gdb" if "x86" in vmlinux_info else "gdb-multiarch"
     if ctx.get(ctx.GDB_PLUGIN) is not None:
         ignore_gdbinit += f" -nx "
     ignore_gdbinit += f"-ix {ctx.challenge_path('debug.gdb')}"

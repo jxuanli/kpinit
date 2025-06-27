@@ -37,8 +37,8 @@ kbase = 0
 vmlinux = "{}"
 try:
   kbase = int(gdb.execute("kbase", to_string=True).strip().split(" ")[-1][:18], 16)
-  print(f"found kbase: {hex(kbase)}")
-  offset = kbase - 0xffffffff81000000
+  print(f"found kbase: {{hex(kbase)}}")
+  offset = kbase - {}
   gdb.execute(f"symbol-file {{vmlinux}} -o {{hex(offset)}}")
 except:
   gdb.execute(f"add-symbol-file {{vmlinux}}")
@@ -68,20 +68,27 @@ def get_ko_gdb(module_name, ko_path):
 
 
 def gen_debug():
+    out = subprocess.run(["readelf", "-l", ctx.VMLINUX], capture_output=True, text=True).stdout
+    base = None
+    for line in out.splitlines():
+        if "LOAD" in line:
+            base = line.split()[2]
+            break
+    assert base is not None, "cannot find load base"
     content = ""
     if ctx.get(ctx.GDB_PLUGIN) is not None:
         content += f"source {ctx.get(ctx.GDB_PLUGIN)}\n"
         content += "set show-flag on\n"
         content += "set exception-debugger on\n"
     content += "target remote localhost:1234\n"
-    content += kbase_template.format(ctx.get(ctx.VMLINUX))
+    content += kbase_template.format(ctx.get(ctx.VMLINUX), base)
     if ctx.get(ctx.LINUX_SRC) is not None:
         content += f"set substitute-path ./ {ctx.get(ctx.LINUX_SRC)}\n"
         if ctx.get(ctx.ORIG_LINUX_PATH) is not None:
             content += f"set substitute-path {ctx.get(ctx.ORIG_LINUX_PATH)} {ctx.get(ctx.LINUX_SRC)}\n"
     content += f"add-symbol-file {ctx.exploit_path('exploit')}\n"
-    out = subprocess.run(["readelf", "-SW", ctx.get_path(ctx.VMLINUX)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout            
-    if b"debug_info" in out:
+    out = subprocess.run(["readelf", "-SW", ctx.get_path(ctx.VMLINUX)], capture_output=True, text=True).stdout            
+    if "debug_info" in out:
         if ctx.get(ctx.VULN_KO) is not None:
             out = (
                 subprocess.check_output(
