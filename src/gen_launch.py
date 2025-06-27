@@ -9,11 +9,22 @@ HEADER = """#!/bin/sh
 """
 OPTIONS = """
 NOKASLR=""
-GDB = ""
+GDB=""
+PORT=1234
 while [ $# -gt 0 ]; do
   case "$1" in
   --gdb)
     GDB="yes"
+    ;;
+  --port)
+    shift
+    PORT="$1"
+    # https://stackoverflow.com/questions/12968093/regex-to-validate-port-number
+    re="^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$"
+    if [[ ! $PORT =~ $re ]]; then
+      echo "port needs to be a numeric number between 0 and 65535."
+      exit 1
+    fi
     ;;
   --debug)
     NOKASLR="nokaslr"
@@ -25,7 +36,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-gcc ./exploit.c ./util/io_helpers.c ./util/general.c ./util/kheap.c -g -o ./exploit -static
+gcc ./exploit.c ./util/io_helpers.c ./util/general.c -g -o ./exploit -static
 """
 CPIO_SCRIPT = """
 if [ $? -ne 0 ]; then
@@ -43,6 +54,7 @@ find . -print0 |
 cd -
 """
 GDB_CMD = """
+sed -i "s/^target remote localhost:.*/target remote localhost:$PORT/" {}
 if [ "$GDB" = "yes" ]; then
   if type zellij >/dev/null 2>&1; then
     zellij action new-pane -d right -c -- bash -c "sleep 3; {}"
@@ -79,6 +91,8 @@ def get_qemu_options(command):
             token = f'"{token} $NOKASLR"'
         elif option == "initrd":
             token = ctx.get_path(ctx.RAMFS)
+        elif option == "s" or option == "S":
+            continue
         opts.append((option, token.strip()))
     return opts
 
@@ -108,12 +122,9 @@ def mod_qemu_options(options):
     for opt, _ in options:
         if opt == "kernel":
             has_kernel = True
-        if opt == "s":
-            has_debug = True
     if not has_kernel:
         logger.error("kernel should be one of the tokens but is not")
-    if not has_debug:
-        options.append(("s", ""))
+    options.append(("gdb", "tcp::$PORT"))
 
 
 def gen_launch():
@@ -145,7 +156,7 @@ def gen_launch():
     ignore_gdbinit += f"-ix {ctx.challenge_path('debug.gdb')}"
     if ctx.get(ctx.GDB_PLUGIN) is not None:
         ignore_gdbinit += f" -nx "
-    script += GDB_CMD.format(ignore_gdbinit, ignore_gdbinit)
+    script += GDB_CMD.format(ctx.challenge_path('debug.gdb'), ignore_gdbinit, ignore_gdbinit)
     script += qemu_cmd.split()[0] + " "
     for option, token in opts:
         script += "\\\n\t" + "-" + option + " " + token + " "

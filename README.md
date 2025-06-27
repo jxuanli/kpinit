@@ -123,6 +123,7 @@ chall/
 - [x] automatic exploit file serving script
   - the localhost can then be exposed/tunneled with tools such as `ngrok`
 
+Currently only supports gdb.
 
 ### [`vmlinux-to-elf`](https://github.com/marin-m/vmlinux-to-elf) installation
 ```bash
