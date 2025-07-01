@@ -52,90 +52,109 @@ def check_qemu_options(tokens):
 class KernelConfig():
 
     name: str
-    msg_set: str
-    msg_unset: str
-    funcs: List[str]
+    is_config_set_desired: bool # indicates if the config set is desirable for the attacker
+    _set_msg: str
+    _not_set_msg: str
+    NOSYMBOL = "No symbol"
 
-    def __init__(self, name: str, msg_set: str | None = None, msg_unset: str | None = None, funcs: List[str] = []):
-        self.name = name
-        self.msg_set = msg_set
-        self.msg_unset = msg_unset
-        self.funcs = funcs
+    @property
+    def set_msg(self):
+        return f"{self.name} is set: {self._set_msg}"
 
-    def __warn__(self):
-        logger.warn(f"{self.name} set: {self.msg_set}")
+    @property
+    def not_set_msg(self):
+        return f"{self.name} is not set: {self._not_set_msg}"
 
-    def __info__(self):
-        logger.info(f"{self.name} not set: {self.msg_unset}")
-
-    def check_kconfig(self, kconfig):
-        if self.name + "=y" in kconfig:
-            self.__warn__()
-        else:
-            self.__info__()
-
-    def dyn_check_vmlinux(self, symbols):
-        logger.error(f"{self.name}: Not implemented")
-
-    def check_vmlinux(self, symbols):
-        for func in self.funcs:
-            if func in symbols:
-                self.__warn__()
-                return
-        if len(self.funcs) == 0:
-            self.dyn_check_vmlinux(symbols)
+    def check_vmlinux(self):
+        is_set = self._check_vmlinux()
+        if is_set is None:
+            logger.warn(f"{self.name} is not checked")
             return
-        self.__info__()
+        if is_set:
+            if self.is_config_set_desired:
+                logger.info(self.set_msg)
+            else:
+                logger.warn(self.set_msg)
+        else:
+            if self.is_config_set_desired:
+                logger.warn(self.unset_msg)
+            else:
+                logger.info(self.unset_msg)
+
+    def _check_vmlinux(self):
+        return None
 
     def gdb_exec(self, cmd):
         try:
-            out = subprocess.check_output(['gdb', '-batch','-ex', f'file {ctx.get(ctx.VMLINUX)}', '-ex', cmd], stderr=subprocess.DEVNULL).decode()
+            return subprocess.check_output(['gdb', '-batch','-ex', f'file {ctx.get(ctx.VMLINUX)}', '-ex', cmd], stderr=subprocess.DEVNULL).decode()
         except Exception as e:
-            error(str(e))
-            out = ""
-        return out
+            logger.warn(str(e))
+            return self.NOSYMBOL
 
 class UsermodeHelperConfig(KernelConfig):
     def __init__(self):
-        super().__init__("CONFIG_STATIC_USERMODEHELPER", "cannot change critical strings", "can change critical strings")
+        self.name = "CONFIG_STATIC_USERMODEHELPER"
+        self.is_config_set_desired = False
+        self._set_msg = "cannot change critical strings"
+        self._not_set_msg = "can change critical strings"
 
-    def dyn_check_vmlinux(self, symbols):
+    def _check_vmlinux(self):
         out = self.gdb_exec("disassemble call_usermodehelper_setup")
-        if re.search(r'\[r..?\+0x28\],\s*(0x[0-9a-f]+)', out): # TODO: double check if correct
-            self.__warn__()
-        else:
-            self.__info__()
+        if self.NOSYMBOL in out:
+            return None
+        return re.search(r'\[r..?\+0x28\],\s*(0x[0-9a-f]+)', out) # TODO: double check if correct
 
 class SlabMergeDefaultConfig(KernelConfig):
     def __init__(self):
-        super().__init__("CONFIG_SLAB_MERGE_DEFAULT", "no cg cache", "cg cache exists")
+        self.name = "CONFIG_SLAB_MERGE_DEFAULT"
+        self.is_config_set_desired = True
+        self._set_msg = "slabs can be aliased"
+        self._not_set_msg = "slabs cannot be aliased"
 
-    def dyn_check_vmlinux(self, symbols):
-        out = None
-        try:
-            out = self.gdb_exec("p/x (long)slab_nomerge")
-        except:
-            logger.warn(f"{self.name} is not checked")
-            return
-        if "$1 = 0x0" in out:
-            self.__warn__()
-        else:
-            self.__info__()
+    def _check_vmlinux(self):
+        out = self.gdb_exec("p/x (long)slab_nomerge")
+        if self.NOSYMBOL in out:
+            return None
+        return "$1 = 0x0" not in out
 
 class SlabFreelistHardened(KernelConfig):
     def __init__(self):
-        super().__init__("CONFIG_SLAB_FREELIST_HARDENED", "checks on double free and mangles heap pointers", "no check on DF and heap pointers are not mangled")
+        self.name = "CONFIG_SLAB_FREELIST_HARDENED"
+        self.is_config_set_desired = False
+        self._set_msg = "checks on double free and mangles heap pointers"
+        self._not_set_msg = "no check on DF and heap pointers are not mangled"
 
-    def dyn_check_vmlinux(self, symbols):
+    def _check_vmlinux(self):
         for sym in ['__kmem_cache_create', 'kmem_cache_open', 'do_kmem_cache_create']:
-            if sym not in symbols:
-                continue
             out = self.gdb_exec(f'disassemble {sym}')
+            if self.NOSYMBOL in out:
+                continue
             if 'get_random' in out:
-                self.__warn__()
-                return
-            break
-        self.__info__()
+                return True
+            else:
+                return False
+        return None
+
+class SlabFreelistRandom(KernelConfig):
+    def __init__(self):
+        self.name = "CONFIG_SLAB_FREELIST_RANDOM"
+        self.is_config_set_desired = False
+        self._set_msg = "initial slub freelist randomized"
+        self._not_set_msg = "initial slub freelist not randomized"
+
+    def _check_vmlinux(self):
+        return self.NOSYMBOL not in self.gdb_exec("disassemble init_cache_random_seq")
+
+class HardenedUsercopy(KernelConfig):
+    def __init__(self):
+        self.name = "CONFIG_HARDENED_USERCOPY"
+        self.is_config_set_desired = False
+        self._set_msg = "bounds checking on reads/writes to kernel heap objects"
+        self._not_set_msg = "NO bounds checking on reads/writes to kernel heap objects"
+
+    def _check_vmlinux(self):
+        return self.NOSYMBOL not in self.gdb_exec("disassemble __check_heap_object")
+
 
 def check_kconfig(configs):
     kconfig = open(ctx.get(ctx.CONFIG), "r").read()
@@ -144,23 +163,8 @@ def check_kconfig(configs):
 
 
 def check_vmlinux(configs):
-    out = (
-        subprocess.check_output(
-            ["nm", "-a", ctx.get_path(ctx.VMLINUX)], stderr=subprocess.DEVNULL
-        )
-        .decode()
-        .strip()
-    )
-    if len(out) < 100:
-        logger.warn("No symbols in vmlinux")
-        return
-    symbols = {}
-    for line in out.splitlines():
-        tmp = line.split()
-        if len(tmp[0]) == 0x10:
-            symbols[tmp[2]] = int(tmp[0], 16)
     for config in configs:
-        config.check_vmlinux(symbols)
+        config.check_vmlinux()
 
 
 def check_config():
@@ -168,8 +172,8 @@ def check_config():
     check mitigations from .config if exists, otherwise checks vmlinux
     """
     configs = [
-        KernelConfig("CONFIG_SLAB_FREELIST_RANDOM", "initial slub freelist randomized", "initial slub freelist not randomized", ["init_cache_random_seq"]),
-        KernelConfig("CONFIG_HARDENED_USERCOPY", "defined usercopy region", "undefined usercopy region", ["usercopy_abort"]),
+        SlabFreelistRandom(),
+        HardenedUsercopy(),
         UsermodeHelperConfig(),
         # KernelConfig("CONFIG_RANDOM_KMALLOC_CACHES", "", "", ["random_kmalloc_seed"]),
         SlabFreelistHardened(),
