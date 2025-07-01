@@ -1,6 +1,5 @@
 from utils import logger, ctx
 import subprocess
-from typing import List
 import re
 
 
@@ -49,10 +48,12 @@ def check_qemu_options(tokens):
     else:
         check_append_option("")
 
-class KernelConfig():
 
+class KernelConfig:
     name: str
-    is_config_set_desired: bool # indicates if the config set is desirable for the attacker
+    is_config_set_desired: (
+        bool  # indicates if the config set is desirable for the attacker
+    )
     _set_msg: str
     _not_set_msg: str
     NOSYMBOL = "No symbol"
@@ -86,10 +87,14 @@ class KernelConfig():
 
     def gdb_exec(self, cmd):
         try:
-            return subprocess.check_output(['gdb', '-batch','-ex', f'file {ctx.get(ctx.VMLINUX)}', '-ex', cmd], stderr=subprocess.DEVNULL).decode()
+            return subprocess.check_output(
+                ["gdb", "-batch", "-ex", f"file {ctx.get(ctx.VMLINUX)}", "-ex", cmd],
+                stderr=subprocess.DEVNULL,
+            ).decode()
         except Exception as e:
             logger.warn(str(e))
             return self.NOSYMBOL
+
 
 class UsermodeHelperConfig(KernelConfig):
     def __init__(self):
@@ -102,7 +107,10 @@ class UsermodeHelperConfig(KernelConfig):
         out = self.gdb_exec("disassemble call_usermodehelper_setup")
         if self.NOSYMBOL in out:
             return None
-        return re.search(r'\[r..?\+0x28\],\s*(0x[0-9a-f]+)', out) # TODO: double check if correct
+        return re.search(
+            r"\[r..?\+0x28\],\s*(0x[0-9a-f]+)", out
+        )  # TODO: double check if correct
+
 
 class SlabMergeDefaultConfig(KernelConfig):
     def __init__(self):
@@ -117,6 +125,7 @@ class SlabMergeDefaultConfig(KernelConfig):
             return None
         return "$1 = 0x0" not in out
 
+
 class SlabFreelistHardened(KernelConfig):
     def __init__(self):
         self.name = "CONFIG_SLAB_FREELIST_HARDENED"
@@ -125,15 +134,16 @@ class SlabFreelistHardened(KernelConfig):
         self._not_set_msg = "no check on DF and heap pointers are not mangled"
 
     def _check_vmlinux(self):
-        for sym in ['__kmem_cache_create', 'kmem_cache_open', 'do_kmem_cache_create']:
-            out = self.gdb_exec(f'disassemble {sym}')
+        for sym in ["__kmem_cache_create", "kmem_cache_open", "do_kmem_cache_create"]:
+            out = self.gdb_exec(f"disassemble {sym}")
             if self.NOSYMBOL in out:
                 continue
-            if 'get_random' in out:
+            if "get_random" in out:
                 return True
             else:
                 return False
         return None
+
 
 class SlabFreelistRandom(KernelConfig):
     def __init__(self):
@@ -144,6 +154,7 @@ class SlabFreelistRandom(KernelConfig):
 
     def _check_vmlinux(self):
         return self.NOSYMBOL not in self.gdb_exec("disassemble init_cache_random_seq")
+
 
 class HardenedUsercopy(KernelConfig):
     def __init__(self):

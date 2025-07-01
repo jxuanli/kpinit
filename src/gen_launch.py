@@ -87,7 +87,7 @@ def get_qemu_options(command):
         elif option == "hda":
             token = ctx.get_path(ctx.QCOW)
         elif option == "append":
-            token = token.replace("\'", "").replace("\"", "")
+            token = token.replace("'", "").replace('"', "")
             token = f'"{token} $NOKASLR"'
         elif option == "initrd":
             token = ctx.get_path(ctx.RAMFS)
@@ -118,7 +118,7 @@ def get_qemu_cmd(file_bs):
 
 
 def mod_qemu_options(options):
-    has_kernel, has_debug = False, False
+    has_kernel = False
     for opt, _ in options:
         if opt == "kernel":
             has_kernel = True
@@ -149,14 +149,18 @@ def gen_launch():
     script += OPTIONS
     if ctx.get_path(ctx.RAMFS) is not None:
         script += CPIO_SCRIPT.format(ctx.fsname(), ctx.get_path(ctx.RAMFS))
-    vmlinux_info = subprocess.run(['file', ctx.get_path(ctx.VMLINUX)], stdout=subprocess.PIPE, text=True).stdout
+    vmlinux_info = subprocess.run(
+        ["file", ctx.get_path(ctx.VMLINUX)], stdout=subprocess.PIPE, text=True
+    ).stdout
     ignore_gdbinit = "gdb" if "x86" in vmlinux_info else "gdb-multiarch"
     if ctx.get(ctx.GDB_PLUGIN) is not None:
-        ignore_gdbinit += f" -nx "
+        ignore_gdbinit += " -nx "
     ignore_gdbinit += f"-ix {ctx.challenge_path('debug.gdb')}"
     if ctx.get(ctx.GDB_PLUGIN) is not None:
-        ignore_gdbinit += f" -nx "
-    script += GDB_CMD.format(ctx.challenge_path('debug.gdb'), ignore_gdbinit, ignore_gdbinit)
+        ignore_gdbinit += " -nx "
+    script += GDB_CMD.format(
+        ctx.challenge_path("debug.gdb"), ignore_gdbinit, ignore_gdbinit
+    )
     script += qemu_cmd.split()[0] + " "
     for option, token in opts:
         script += "\\\n\t" + "-" + option + " " + token + " "

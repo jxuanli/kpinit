@@ -1,9 +1,10 @@
 import sys
 from os import path
+
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from gen_debug import *
-import unittest 
+from gen_debug import get_ko_gdb
+import unittest
 
 expected_gdb_ko = """
 python
@@ -34,6 +35,7 @@ gdb.execute(f'add-symbol-file nice.ko {target_text_addr:#x}')
 end
 """
 
+
 class TestFormattingGdbScripts(unittest.TestCase):
     def test_get_ko_gdb(self):
         expected = expected_gdb_ko.splitlines()
@@ -44,5 +46,5 @@ class TestFormattingGdbScripts(unittest.TestCase):
             self.assertEqual(result[i], expected[i])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

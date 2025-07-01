@@ -1,4 +1,5 @@
-import os, json
+import os
+import json
 from logger import Logger
 from typing import List, Dict
 

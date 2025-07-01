@@ -1,4 +1,6 @@
-import os, shutil, subprocess
+import os
+import shutil
+import subprocess
 from utils import logger, ctx
 
 
@@ -63,30 +65,45 @@ def extract_vmlinux():
     out = b""
     if ctx.get_path_root(ctx.VMLINUX) is None:
         vmlinux_path = ctx.root_path("vmlinux")
-        if shutil.which('vmlinux-to-elf') is not None:
+        if shutil.which("vmlinux-to-elf") is not None:
             logger.info("Extracting vmlinux...")
-            out = subprocess.run(['vmlinux-to-elf', ctx.get_path(ctx.BZIMAGE), vmlinux_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout            
+            out = subprocess.run(
+                ["vmlinux-to-elf", ctx.get_path(ctx.BZIMAGE), vmlinux_path],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            ).stdout
             if b"Successfully wrote the new ELF kernel" in out:
                 logger.info("extracted vmlinux with vmlinux-to-elf")
                 ctx.set_path(ctx.VMLINUX, vmlinux_path)
     if ctx.get_path_root(ctx.VMLINUX) is None:
         # fallback
         logger.warn(f"extracting vmlinux with vmlinux-to-elf failed: {out}")
-        out = subprocess.check_output([os.path.join(os.path.dirname(os.path.abspath(__file__)), "extract-vmlinux"), ctx.get_path(ctx.BZIMAGE)])
+        out = subprocess.check_output(
+            [
+                os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), "extract-vmlinux"
+                ),
+                ctx.get_path(ctx.BZIMAGE),
+            ]
+        )
         vmlinux_path = ctx.root_path("vmlinux")
         f = open(vmlinux_path, "wb")
         f.write(out)
         ctx.set_path(ctx.VMLINUX, vmlinux_path)
         logger.info("extracted vmlinux with extract-vmlinux")
 
-    shutil.copy2(ctx.get_path_root(ctx.VMLINUX), ctx.get_path(ctx.VMLINUX))       
+    shutil.copy2(ctx.get_path_root(ctx.VMLINUX), ctx.get_path(ctx.VMLINUX))
     try:
-        path = subprocess.run(
-            f"readelf --debug-dump=info {ctx.get_path(ctx.VMLINUX)} | grep -m 1 'DW_AT_comp_dir'",
-            shell=True,
-            capture_output=True,
-            text=True
-        ).stdout.strip().split(" ")[-1]
+        path = (
+            subprocess.run(
+                f"readelf --debug-dump=info {ctx.get_path(ctx.VMLINUX)} | grep -m 1 'DW_AT_comp_dir'",
+                shell=True,
+                capture_output=True,
+                text=True,
+            )
+            .stdout.strip()
+            .split(" ")[-1]
+        )
         if path and len(path) > 0:
             ctx.set(ctx.ORIG_LINUX_PATH, path)
             logger.info(f"found original linux source path at {path}")
@@ -94,6 +111,7 @@ def extract_vmlinux():
     except subprocess.CalledProcessError as e:
         logger.error(f"Error: {e}")
     logger.warn("did not find the path in which the kernel is compiled")
+
 
 def extract_context():
     """

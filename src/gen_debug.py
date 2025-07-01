@@ -46,11 +46,11 @@ except:
 end
 """
 
-libslub_template = f"""
+libslub_template = """
 python
 import gdb
 try:
-    gdb.execute("source {{}}")
+    gdb.execute("source {}")
 except:
     print("failed to load libslub")
 end
@@ -63,12 +63,15 @@ end
 c
 """
 
+
 def get_ko_gdb(module_name, ko_path):
     return ko_gdb_template.format(module_name=module_name, ko_path=ko_path)
 
 
 def gen_debug():
-    out = subprocess.run(["readelf", "-l", ctx.VMLINUX], capture_output=True, text=True).stdout
+    out = subprocess.run(
+        ["readelf", "-l", ctx.VMLINUX], capture_output=True, text=True
+    ).stdout
     base = None
     for line in out.splitlines():
         if "LOAD" in line:
@@ -87,7 +90,9 @@ def gen_debug():
         if ctx.get(ctx.ORIG_LINUX_PATH) is not None:
             content += f"set substitute-path {ctx.get(ctx.ORIG_LINUX_PATH)} {ctx.get(ctx.LINUX_SRC)}\n"
     content += f"add-symbol-file {ctx.exploit_path('exploit')}\n"
-    out = subprocess.run(["readelf", "-SW", ctx.get_path(ctx.VMLINUX)], capture_output=True, text=True).stdout            
+    out = subprocess.run(
+        ["readelf", "-SW", ctx.get_path(ctx.VMLINUX)], capture_output=True, text=True
+    ).stdout
     if "debug_info" in out:
         if ctx.get(ctx.VULN_KO) is not None:
             out = (
