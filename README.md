@@ -17,6 +17,8 @@ A kernel pwning workspace
   - e.g. files from different CTF challenges might vary in formats
 - directories/files should be organized and generated to accelerate exploit development
   - should enable fast experimentations on various kernel exploits
+  - should make the kernelland pwning experience similar to the userland pwning experience
+    - e.g. contains a subset of helpers provided by `pwntoolss`
 - should be as customizable as possible
   - all files including those responsible for performing static checks and generating helper files are changeable
 
@@ -32,7 +34,7 @@ echo "alias kpinit='python3 $PWD/kpinit/kpinit.py'" >>~/.bash_aliases
 cd <CHALLENGE_DIR>
 kpinit
 cd workspace/exploit
-./launch.sh [--gdb] [--nokaslr]
+./launch.sh [--gdb] [--nokaslr] [--port <port>]
 ```
 
 
@@ -76,7 +78,7 @@ chall/
     - options 
   - [x] allow `--debug` mode
     - `nokaslr` (need to check if it is already an option)
-    - `-s`
+    - supports different ports
   - [x] build `./workspace/exploit/exploit.c`
     - include it in `./workspace/challenge/initramfs`
     - recompress `./workspace/challenge/initramfs.cpio.gz` 
@@ -88,14 +90,12 @@ chall/
 - [x] run checks on `.config` if exists
   - [x] else if `vmlinux` is not stripped, run checks on that
 - [x] extract `vuln.ko` if needed 
-- [-] generate `debug.gdb`
+- [x] generate `debug.gdb`
   - [x] source `vmlinux`
     - load `vmlinux` at the correct KASLR offset
   - [x] source `libslub`
   - [x] add `vuln.ko` symbols if exists
   - [x] maybe need to check if `vmlinux` is stripped or not in order to add `vuln.ko` symbols 
-  - [-] add debug symbols if `bzImage`/`vmlinux` is stripped and `kallsyms` is not disabled (I might implement this in pwndbg instead)
-    - probably requires running qemu commands inside the gdb session
   - [x] source Linux source code
   - [x] support custom breakpoints
 - [ ] generate exploit helpers
@@ -108,14 +108,6 @@ chall/
     - `core_dump`
     - [-] slubstick
     - [-] microarch
-  - [ ] kheap spray helpers
-    - `GFP_KERNEL_ACCOUNT`
-      - `pipe_buffer`
-      - `msg_msgseg` (`msg_msg` got its own dedicated cache as of the latest kernel)
-      - `simple_xattr`
-    - `GFP_KERNEL`
-      - `unix_address`
-      - `poll_list`
   - [ ] bpf
   - [ ] Makefile
 - [x] `qcow` file format support (instead of `cpio`)
