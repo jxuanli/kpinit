@@ -118,7 +118,6 @@ def extract_context():
     generate settings.json file if does not exist, otherwise use the existing settings
     """
     if not ctx.load():
-        ctx.set_path(ctx.LIBSLUB, os.path.expanduser("~/Tools/libslub/libslub.py"))
         ctx.set_path(
             ctx.GDB_PLUGIN, os.path.expanduser("~/Documents/pwndbg/gdbinit.py")
         )

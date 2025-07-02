@@ -93,7 +93,6 @@ chall/
 - [x] generate `debug.gdb`
   - [x] source `vmlinux`
     - load `vmlinux` at the correct KASLR offset
-  - [x] source `libslub`
   - [x] add `vuln.ko` symbols if exists
   - [x] maybe need to check if `vmlinux` is stripped or not in order to add `vuln.ko` symbols 
   - [x] source Linux source code

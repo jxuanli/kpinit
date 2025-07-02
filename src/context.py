@@ -35,7 +35,6 @@ class Context:
     RUN_SH = "run.sh"
     VMLINUX = "vmlinux"
     VULN_KO = "vuln"
-    LIBSLUB = "libslub"
     CONFIG = "kernel_config"
     QCOW = "qcow"
     LINUX_SRC = "linux source folder"
@@ -52,7 +51,6 @@ class Context:
             RUN_SH,
             VMLINUX,
             VULN_KO,
-            LIBSLUB,
             CONFIG,
             QCOW,
             LINUX_SRC,
