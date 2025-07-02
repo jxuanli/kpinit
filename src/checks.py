@@ -54,17 +54,17 @@ class KernelConfig:
     is_config_set_desired: (
         bool  # indicates if the config set is desirable for the attacker
     )
-    _set_msg: str
-    _not_set_msg: str
+    _msg_if_set: str
+    _msg_if_not_set: str
     NOSYMBOL = "No symbol"
 
     @property
-    def set_msg(self):
-        return f"{self.name} is set: {self._set_msg}"
+    def msg_if_set(self):
+        return f"{self.name} is set: {self._msg_if_set}"
 
     @property
-    def not_set_msg(self):
-        return f"{self.name} is not set: {self._not_set_msg}"
+    def msg_if_not_set(self):
+        return f"{self.name} is not set: {self._msg_if_not_set}"
 
     def check_vmlinux(self):
         is_set = self._check_vmlinux()
@@ -73,14 +73,14 @@ class KernelConfig:
             return
         if is_set:
             if self.is_config_set_desired:
-                logger.info(self.set_msg)
+                logger.info(self.msg_if_set)
             else:
-                logger.warn(self.set_msg)
+                logger.warn(self.msg_if_set)
         else:
             if self.is_config_set_desired:
-                logger.warn(self.unset_msg)
+                logger.warn(self.msg_if_not_set)
             else:
-                logger.info(self.unset_msg)
+                logger.info(self.msg_if_not_set)
 
     def _check_vmlinux(self):
         return None
@@ -91,8 +91,7 @@ class KernelConfig:
                 ["gdb", "-batch", "-ex", f"file {ctx.get(ctx.VMLINUX)}", "-ex", cmd],
                 stderr=subprocess.DEVNULL,
             ).decode()
-        except Exception as e:
-            logger.warn(str(e))
+        except Exception:
             return self.NOSYMBOL
 
 
@@ -100,8 +99,8 @@ class UsermodeHelperConfig(KernelConfig):
     def __init__(self):
         self.name = "CONFIG_STATIC_USERMODEHELPER"
         self.is_config_set_desired = False
-        self._set_msg = "cannot change critical strings"
-        self._not_set_msg = "can change critical strings"
+        self._msg_if_set = "cannot change critical strings"
+        self._msg_if_not_set = "can change critical strings"
 
     def _check_vmlinux(self):
         out = self.gdb_exec("disassemble call_usermodehelper_setup")
@@ -116,8 +115,8 @@ class SlabMergeDefaultConfig(KernelConfig):
     def __init__(self):
         self.name = "CONFIG_SLAB_MERGE_DEFAULT"
         self.is_config_set_desired = True
-        self._set_msg = "slabs can be aliased"
-        self._not_set_msg = "slabs cannot be aliased"
+        self._msg_if_set = "slabs can be aliased"
+        self._msg_if_not_set = "slabs cannot be aliased"
 
     def _check_vmlinux(self):
         out = self.gdb_exec("p/x (long)slab_nomerge")
@@ -130,8 +129,8 @@ class SlabFreelistHardened(KernelConfig):
     def __init__(self):
         self.name = "CONFIG_SLAB_FREELIST_HARDENED"
         self.is_config_set_desired = False
-        self._set_msg = "checks on double free and mangles heap pointers"
-        self._not_set_msg = "no check on DF and heap pointers are not mangled"
+        self._msg_if_set = "checks on double free and mangles heap pointers"
+        self._msg_if_not_set = "no check on DF and heap pointers are not mangled"
 
     def _check_vmlinux(self):
         for sym in ["__kmem_cache_create", "kmem_cache_open", "do_kmem_cache_create"]:
@@ -149,8 +148,8 @@ class SlabFreelistRandom(KernelConfig):
     def __init__(self):
         self.name = "CONFIG_SLAB_FREELIST_RANDOM"
         self.is_config_set_desired = False
-        self._set_msg = "initial slub freelist randomized"
-        self._not_set_msg = "initial slub freelist not randomized"
+        self._msg_if_set = "initial slub freelist randomized"
+        self._msg_if_not_set = "initial slub freelist not randomized"
 
     def _check_vmlinux(self):
         return self.NOSYMBOL not in self.gdb_exec("disassemble init_cache_random_seq")
@@ -160,11 +159,60 @@ class HardenedUsercopy(KernelConfig):
     def __init__(self):
         self.name = "CONFIG_HARDENED_USERCOPY"
         self.is_config_set_desired = False
-        self._set_msg = "bounds checking on reads/writes to kernel heap objects"
-        self._not_set_msg = "NO bounds checking on reads/writes to kernel heap objects"
+        self._msg_if_set = "bounds checking on reads/writes to kernel heap objects"
+        self._msg_if_not_set = (
+            "NO bounds checking on reads/writes to kernel heap objects"
+        )
 
     def _check_vmlinux(self):
         return self.NOSYMBOL not in self.gdb_exec("disassemble __check_heap_object")
+
+
+class BpfUnprivDefaultOff(KernelConfig):
+    def __init__(self):
+        self.name = "CONFIG_BPF_UNPRIV_DEFAULT_OFF"
+        self.is_config_set_desired = False
+        self._msg_if_set = "unpriveleged user CANNOT load BPF programs"
+        self._msg_if_not_set = "unpriveleged user CAN load BPF programs"
+
+    def _check_vmlinux(self):
+        return "$1 = 0x0" not in self.gdb_exec(
+            "p/x (int)sysctl_unprivileged_bpf_disabled"
+        )
+
+
+class RandStruct(KernelConfig):
+    def __init__(self):
+        self.name = "CONFIG_RANDSTRUCT"
+        self.is_config_set_desired = False
+        self._msg_if_set = "marked structures are randomized"
+        self._msg_if_not_set = "marked structures are NOT randomized"
+
+    def _check_vmlinux(self):
+        out = self.gdb_exec("p/x (long)tainted_mask")
+        return self.NOSYMBOL not in out and "$1 = 0x0" not in out
+
+
+class RandomKmallocCaches(KernelConfig):
+    def __init__(self):
+        self.name = "CONFIG_RANDOM_KMALLOC_CACHES"
+        self.is_config_set_desired = False
+        self._msg_if_set = "Multiple copies of slab caches are used for normal kmalloc"
+        self._msg_if_not_set = "One copy of slab caches is used for normal kmalloc"
+
+    def _check_vmlinux(self):
+        return self.NOSYMBOL not in self.gdb_exec("p/x &random_kmalloc_seed")
+
+
+class Memcg(KernelConfig):
+    def __init__(self):
+        self.name = "CONFIG_MEMCG"
+        self.is_config_set_desired = False
+        self._msg_if_set = "cg-caches exist"
+        self._msg_if_not_set = "cg-caches do not exist"
+
+    def _check_vmlinux(self):
+        return self.NOSYMBOL not in self.gdb_exec("p/x &kpagecgroup_proc_ops")
 
 
 def check_kconfig(configs):
@@ -186,9 +234,12 @@ def check_config():
         SlabFreelistRandom(),
         HardenedUsercopy(),
         UsermodeHelperConfig(),
-        # KernelConfig("CONFIG_RANDOM_KMALLOC_CACHES", "", "", ["random_kmalloc_seed"]),
+        RandomKmallocCaches(),
         SlabFreelistHardened(),
         SlabMergeDefaultConfig(),
+        BpfUnprivDefaultOff(),
+        RandStruct(),
+        Memcg(),
     ]
     logger.important("Checking kernel configs")
     if ctx.get(ctx.CONFIG) and False:
