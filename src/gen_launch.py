@@ -35,9 +35,10 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-
-gcc ./exploit.c ./util/io_helpers.c ./util/general.c -g -o ./exploit -static
 """
+COMPILE_EXPLOIT = (
+    "{} ./exploit.c ./util/io_helpers.c ./util/general.c -g -o ./exploit -static"
+)
 CPIO_SCRIPT = """
 if [ $? -ne 0 ]; then
   echo "failed on compiling exploit script"
@@ -145,13 +146,19 @@ def gen_launch():
         shutil.copy2(runsh_fpath, launch_fpath)
         return
     mod_qemu_options(opts)
-    script = HEADER
-    script += OPTIONS
-    if ctx.get_path(ctx.RAMFS) is not None:
-        script += CPIO_SCRIPT.format(ctx.fsname(), ctx.get_path(ctx.RAMFS))
     vmlinux_info = subprocess.run(
         ["file", ctx.get_path(ctx.VMLINUX)], stdout=subprocess.PIPE, text=True
     ).stdout
+    script = HEADER
+    script += OPTIONS
+    compiler = "gcc"
+    if "aarch64" in vmlinux_info:
+        compiler = "aarch64-linux-gnu-gcc"
+    elif "riscv64" in vmlinux_info:
+        compiler = "riscv64-linux-gnu-gcc"
+    script += COMPILE_EXPLOIT.format(compiler)
+    if ctx.get_path(ctx.RAMFS) is not None:
+        script += CPIO_SCRIPT.format(ctx.fsname(), ctx.get_path(ctx.RAMFS))
     ignore_gdbinit = "gdb" if "x86" in vmlinux_info else "gdb-multiarch"
     if ctx.get(ctx.GDB_PLUGIN) is not None:
         ignore_gdbinit += " -nx "

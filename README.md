@@ -109,6 +109,7 @@ chall/
     - [-] microarch
   - [ ] bpf
   - [ ] Makefile
+- [x] support `x86-64`, `aarch64`, and `riscv64`
 - [x] `qcow` file format support (instead of `cpio`)
 - [ ] support environment variables for specifying file paths (for gdb plugins, etc)
 - [x] automatic exploit file serving script
