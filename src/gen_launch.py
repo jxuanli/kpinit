@@ -159,15 +159,9 @@ def gen_launch():
     script += COMPILE_EXPLOIT.format(compiler)
     if ctx.get_path(ctx.RAMFS) is not None:
         script += CPIO_SCRIPT.format(ctx.fsname(), ctx.get_path(ctx.RAMFS))
-    ignore_gdbinit = "gdb" if "x86" in vmlinux_info else "gdb-multiarch"
-    if ctx.get(ctx.GDB_PLUGIN) is not None:
-        ignore_gdbinit += " -nx "
-    ignore_gdbinit += f"-ix {ctx.challenge_path('debug.gdb')}"
-    if ctx.get(ctx.GDB_PLUGIN) is not None:
-        ignore_gdbinit += " -nx "
-    script += GDB_CMD.format(
-        ctx.challenge_path("debug.gdb"), ignore_gdbinit, ignore_gdbinit
-    )
+    gdb = "gdb" if "x86" in vmlinux_info else "gdb-multiarch"
+    gdb += f" -ix {ctx.challenge_path('debug.gdb')}"
+    script += GDB_CMD.format(ctx.challenge_path("debug.gdb"), gdb, gdb)
     script += qemu_cmd.split()[0] + " "
     for option, token in opts:
         script += "\\\n\t" + "-" + option + " " + token + " "

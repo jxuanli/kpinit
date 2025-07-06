@@ -79,10 +79,8 @@ def gen_debug():
             break
     assert base is not None, "cannot find load base"
     content = ""
-    if ctx.get(ctx.GDB_PLUGIN) is not None:
-        content += f"source {ctx.get(ctx.GDB_PLUGIN)}\n"
-        content += "set show-flag on\n"
-        content += "set exception-debugger on\n"
+    content += "set show-flag on\n"
+    content += "set exception-debugger on\n"
     content += "target remote localhost:$PORT\n"
     content += kbase_template.format(ctx.get(ctx.VMLINUX), base)
     if ctx.get(ctx.LINUX_SRC) is not None:

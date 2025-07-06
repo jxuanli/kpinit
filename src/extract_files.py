@@ -118,9 +118,6 @@ def extract_context():
     generate settings.json file if does not exist, otherwise use the existing settings
     """
     if not ctx.load():
-        ctx.set_path(
-            ctx.GDB_PLUGIN, os.path.expanduser("~/Documents/pwndbg/gdbinit.py")
-        )
         for fname in os.listdir(os.getcwd()):
             if fname.endswith(".ko"):
                 ctx.set_path(ctx.VULN_KO, ctx.root_path(fname))

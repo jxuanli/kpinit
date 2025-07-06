@@ -38,7 +38,6 @@ class Context:
     CONFIG = "kernel_config"
     QCOW = "qcow"
     LINUX_SRC = "linux source folder"
-    GDB_PLUGIN = "custom gdb plugin"
     ORIG_LINUX_PATH = "original linux source path"
 
     settings: Dict[str, Setting]
@@ -54,7 +53,6 @@ class Context:
             CONFIG,
             QCOW,
             LINUX_SRC,
-            GDB_PLUGIN,
             ORIG_LINUX_PATH,
         ],
     ):

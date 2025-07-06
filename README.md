@@ -18,7 +18,7 @@ A kernel pwning workspace
 - directories/files should be organized and generated to accelerate exploit development
   - should enable fast experimentations on various kernel exploits
   - should make the kernelland pwning experience similar to the userland pwning experience
-    - e.g. contains a subset of helpers provided by `pwntoolss`
+    - e.g. contains a subset of helpers provided by `pwntools`
 - should be as customizable as possible
   - all files including those responsible for performing static checks and generating helper files are changeable
 
@@ -98,20 +98,18 @@ chall/
   - [x] source Linux source code
   - [x] support custom breakpoints
 - [ ] generate exploit helpers
-  - [-] io helpers
+  - [x] io helpers
     - `info`, `warn`, `error`, `important`, `input`, etc (similar to those in pwntools)
-    - [-] cyclic
-  - [-] general exploit helpers
+    - cyclic
+  - [ ] general exploit helpers
     - retspill
     - `modprobe_path`
     - `core_dump`
-    - [-] slubstick
-    - [-] microarch
+    - [ ] slubstick
+    - [ ] microarch
   - [ ] bpf
-  - [ ] Makefile
 - [x] support `x86-64`, `aarch64`, and `riscv64`
 - [x] `qcow` file format support (instead of `cpio`)
-- [ ] support environment variables for specifying file paths (for gdb plugins, etc)
 - [x] automatic exploit file serving script
   - the localhost can then be exposed/tunneled with tools such as `ngrok`
 
