@@ -62,6 +62,7 @@ def gen_workspace():
         os.mkdir(ws_path)
     os.mkdir(ctx.challenge_path())
     os.mkdir(ctx.exploit_path())
+    ctx.create_logfile()
     extract_context()
     gen_challenge()
     gen_exploit()

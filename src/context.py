@@ -5,7 +5,6 @@ from typing import List, Dict
 
 
 CONTEXT_FILE = "context.json"
-logger = Logger()
 
 
 class Setting:
@@ -13,14 +12,15 @@ class Setting:
     val: str
     isStrict: bool
 
-    def __init__(self, key, val: str = None, isStrict=False):
+    def __init__(self, key, val: str = None, isStrict=False, logger=None):
         self.key = key
         self.val = val
         self.isStrict = isStrict
+        self.logger = logger
 
     def check(self):
         if self.isStrict and self.val is None:
-            logger.error(
+            self.logger.error(
                 f"the setting for {self.key} is invalid, change workspace/{CONTEXT_FILE} in order to proceed"
             )
 
@@ -57,11 +57,12 @@ class Context:
         ],
     ):
         self.settings = {}  # a map of settings
+        self.logger = Logger()
         for setting in settings:
-            self.settings[setting] = Setting(setting)
+            self.settings[setting] = Setting(setting, logger=self.logger)
 
     def set(self, setting, val=None, isStrict=False):
-        self.settings[setting] = Setting(setting, val, isStrict)
+        self.settings[setting] = Setting(setting, val, isStrict, logger=self.logger)
         self.persist()
 
     def set_path(self, setting, path, isStrict=False):
@@ -86,7 +87,7 @@ class Context:
         elif setting in [self.VULN_KO]:
             return self.exploit_path(val)
         else:
-            logger.error(f"Invalid setting {setting}")
+            self.logger.error(f"Invalid setting {setting}")
 
     def root_path(self, name=None):
         """
@@ -144,6 +145,10 @@ class Context:
         for name, setting in self.settings.items():
             serialized[name] = setting.val
         return serialized
+
+    def create_logfile(self):
+        logfile_path = self.workspace_path("log.txt")
+        self.logger.logfile = open(logfile_path, "w")
 
     def __repr__(self):
         return f"Context: \n{json.dumps(self.serialize(), indent=4)}\n"

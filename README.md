@@ -44,6 +44,7 @@ cd workspace/exploit
 chall/
 ├── workspace/ (generated)
 │   ├── context.json
+│   ├── log.txt
 │   ├── challenge/
 │   │   ├── vmlinux
 │   │   ├── bzImage
@@ -112,6 +113,7 @@ chall/
 - [x] `qcow` file format support (instead of `cpio`)
 - [x] automatic exploit file serving script
   - the localhost can then be exposed/tunneled with tools such as `ngrok`
+- [x] preserve log
 
 Currently only supports gdb.
 

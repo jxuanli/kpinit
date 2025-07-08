@@ -34,7 +34,7 @@ def check_append_option(opt):
     if "kpti=1" in opt or "pti=on" in opt:
         logger.warn("KPTI enabled")
     else:
-        logger.info("KPTI diabled")
+        logger.info("KPTI disabled")
 
 
 def check_qemu_options(tokens):
