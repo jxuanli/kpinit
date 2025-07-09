@@ -72,7 +72,7 @@ def get_qemu_options(command):
     @return: list of options, a map with their corresponding values of the qemu command
     """
     parts = command.split()
-    opts = []
+    opts = {}
     i = 1  # skip the qemu bin name
     while i < len(parts):
         if not parts[i].startswith("-"):
@@ -94,7 +94,7 @@ def get_qemu_options(command):
             token = ctx.get_path(ctx.RAMFS)
         elif option == "s" or option == "S":
             continue
-        opts.append((option, token.strip()))
+        opts[option] = token.strip()
     return opts
 
 
@@ -120,12 +120,12 @@ def get_qemu_cmd(file_bs):
 
 def mod_qemu_options(options):
     has_kernel = False
-    for opt, _ in options:
+    for opt, _ in options.items():
         if opt == "kernel":
             has_kernel = True
     if not has_kernel:
         logger.error("kernel should be one of the tokens but is not")
-    options.append(("gdb", "tcp::$PORT"))
+    options["gdb"] = "tcp::$PORT"
 
 
 def gen_launch():
@@ -163,7 +163,7 @@ def gen_launch():
     gdb += f" -ix {ctx.challenge_path('debug.gdb')}"
     script += GDB_CMD.format(ctx.challenge_path("debug.gdb"), gdb, gdb)
     script += qemu_cmd.split()[0] + " "
-    for option, token in opts:
+    for option, token in opts.items():
         script += "\\\n\t" + "-" + option + " " + token + " "
 
     script += "\n\n\nsetterm -linewrap on"  # TODO:
