@@ -56,7 +56,7 @@ chall/
 │       │   └── (utility files)
 │       ├── launch.sh (improved run.sh)
 │       ├── serve.sh
-│       ├── bps.gdb
+│       ├── scripts.gdb
 │       ├── init
 │       ├── vuln.ko
 │       └── exploit.c (imports files in util/)

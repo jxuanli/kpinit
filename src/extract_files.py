@@ -121,7 +121,7 @@ def extract_context():
         for fname in os.listdir(os.getcwd()):
             if fname.endswith(".ko"):
                 ctx.set_path(ctx.VULN_KO, ctx.root_path(fname))
-            elif "bzImage" in fname or "vmlinuz" in fname:
+            elif "Image" in fname or "vmlinuz" in fname:
                 ctx.set_path(ctx.BZIMAGE, ctx.root_path(fname), True)
             elif "vmlinux" in fname:
                 ctx.set_path(ctx.VMLINUX, ctx.root_path(fname))

@@ -38,7 +38,6 @@ def gen_exploit():
     extract_ko()
     gen_debug()
     gen_exploit_src()
-    open(ctx.exploit_path("bps.gdb"), "w")
     check_config()
 
 
@@ -48,6 +47,7 @@ def gen_workspace():
     """
     ws_path = ctx.workspace_path()
     if os.path.exists(ws_path):
+        ctx.create_logfile()
         assert os.path.isdir(ws_path)
         logger.warn(
             "removing existing workspace/challenge and workspace/exploit to generate a new one"
@@ -60,9 +60,9 @@ def gen_workspace():
             shutil.rmtree(ctx.exploit_path())
     else:
         os.mkdir(ws_path)
+        ctx.create_logfile()
     os.mkdir(ctx.challenge_path())
     os.mkdir(ctx.exploit_path())
-    ctx.create_logfile()
     extract_context()
     gen_challenge()
     gen_exploit()

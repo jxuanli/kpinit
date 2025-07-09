@@ -46,16 +46,6 @@ except:
 end
 """
 
-libslub_template = """
-python
-import gdb
-try:
-    gdb.execute("source {}")
-except:
-    print("failed to load libslub")
-end
-"""
-
 finished_msg = """
 python
 print("finished sourcing files")
@@ -69,18 +59,22 @@ def get_ko_gdb(module_name, ko_path):
 
 
 def gen_debug():
-    out = subprocess.run(
+    vmlinux_info = subprocess.run(
         ["readelf", "-l", ctx.VMLINUX], capture_output=True, text=True
     ).stdout
     base = None
-    for line in out.splitlines():
+    for line in vmlinux_info.splitlines():
         if "LOAD" in line:
-            base = line.split()[2]
+            base = int(line.split()[2], 16)
             break
     assert base is not None, "cannot find load base"
+    vmlinux_info = subprocess.run(
+        ["file", ctx.get_path(ctx.VMLINUX)], stdout=subprocess.PIPE, text=True
+    ).stdout
+    if "aarch64" in vmlinux_info:
+        # for some reason the first 0x10000 bytes of an aarch64 kernel is not mappped
+        base += 0x10000
     content = ""
-    content += "set show-flag on\n"
-    content += "set exception-debugger on\n"
     content += "target remote localhost:$PORT\n"
     content += kbase_template.format(ctx.get(ctx.VMLINUX), base)
     if ctx.get(ctx.LINUX_SRC) is not None:
@@ -88,10 +82,10 @@ def gen_debug():
         if ctx.get(ctx.ORIG_LINUX_PATH) is not None:
             content += f"set substitute-path {ctx.get(ctx.ORIG_LINUX_PATH)} {ctx.get(ctx.LINUX_SRC)}\n"
     content += f"add-symbol-file {ctx.exploit_path('exploit')}\n"
-    out = subprocess.run(
+    vmlinux_info = subprocess.run(
         ["readelf", "-SW", ctx.get_path(ctx.VMLINUX)], capture_output=True, text=True
     ).stdout
-    if "debug_info" in out:
+    if "debug_info" in vmlinux_info:
         if ctx.get(ctx.VULN_KO) is not None:
             out = (
                 subprocess.check_output(
@@ -112,7 +106,14 @@ def gen_debug():
     else:
         logger.warn("no debug info 😢")
 
-    content += f"source {ctx.exploit_path('bps.gdb')}\n"
+    scripts = ctx.exploit_path("scripts.gdb")
+    content += f"source {scripts}\n"
     content += finished_msg
     f = open(ctx.challenge_path("debug.gdb"), "w")
+    f.write(content)
+    f = open(scripts, "w")
+    # this prob only works on pwndbg
+    content = ""
+    content += "set show-flag on\n"
+    content += "set exception-debugger on\n"
     f.write(content)

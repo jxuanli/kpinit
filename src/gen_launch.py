@@ -26,7 +26,7 @@ while [ $# -gt 0 ]; do
       exit 1
     fi
     ;;
-  --debug)
+  --nokaslr)
     NOKASLR="nokaslr"
     ;;
   *)
