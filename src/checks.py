@@ -87,10 +87,26 @@ class KernelConfig:
 
     def gdb_exec(self, cmd):
         try:
-            return subprocess.check_output(
-                ["gdb", "-batch", "-ex", f"file {ctx.get(ctx.VMLINUX)}", "-ex", cmd],
+            gdb = "gdb" if "x86" in ctx.arch else "gdb-multiarch"
+            MAGICSTR = '"hi"'
+            res = subprocess.check_output(
+                [
+                    gdb,
+                    "-batch",
+                    "-ex",
+                    f"file {ctx.get(ctx.VMLINUX)}",
+                    "-ex",
+                    f"print {MAGICSTR}",
+                    "-ex",
+                    cmd,
+                ],
                 stderr=subprocess.DEVNULL,
             ).decode()
+            if MAGICSTR not in res:
+                logger.warn("something went terribly wrong while running gdb")
+                return self.NOSYMBOL
+            print(res)
+            return res.split(MAGICSTR)[1]
         except Exception:
             return self.NOSYMBOL
 
@@ -106,9 +122,10 @@ class UsermodeHelperConfig(KernelConfig):
         out = self.gdb_exec("disassemble call_usermodehelper_setup")
         if self.NOSYMBOL in out:
             return None
-        return (
-            re.search(r"\[r..?\+0x28\],\s*(0x[0-9a-f]+)", out) is not None
-        )  # TODO: double check if correct, prob not for aarch64
+        if ctx.arch == "x86-64":
+            return re.search(r"\[r..?\+0x28\],\s*(0x[0-9a-f]+)", out) is not None
+        if ctx.arch == "aarch64":
+            return len(out.splitlines()) > 50
 
 
 class SlabMergeDefaultConfig(KernelConfig):
@@ -119,10 +136,14 @@ class SlabMergeDefaultConfig(KernelConfig):
         self._msg_if_not_set = "slabs cannot be aliased"
 
     def _check_vmlinux(self):
-        out = self.gdb_exec("p/x (long)slab_nomerge")
+        out = self.gdb_exec("p/x slab_nomerge")
         if self.NOSYMBOL in out:
-            return None
-        return "$1 = 0x0" not in out
+            # the symbol is part of DAWRF
+            out = self.gdb_exec("disassemble find_mergeable")
+            if self.NOSYMBOL in out:
+                return None
+            return len(out.splitlines()) > 5
+        return "$2 = 0x0" in out
 
 
 class SlabFreelistHardened(KernelConfig):
@@ -133,7 +154,7 @@ class SlabFreelistHardened(KernelConfig):
         self._msg_if_not_set = "no check on DF and heap pointers are not mangled"
 
     def _check_vmlinux(self):
-        for sym in ["__kmem_cache_create", "kmem_cache_open", "do_kmem_cache_create"]:
+        for sym in ["do_kmem_cache_create", "kmem_cache_open", "__kmem_cache_create"]:
             out = self.gdb_exec(f"disassemble {sym}")
             if self.NOSYMBOL in out:
                 continue
@@ -176,9 +197,7 @@ class BpfUnprivDefaultOff(KernelConfig):
         self._msg_if_not_set = "unpriveleged user CAN load BPF programs"
 
     def _check_vmlinux(self):
-        return "$1 = 0x0" not in self.gdb_exec(
-            "p/x (int)sysctl_unprivileged_bpf_disabled"
-        )
+        return "$2 = 0x2" in self.gdb_exec("p/x (int)sysctl_unprivileged_bpf_disabled")
 
 
 class RandStruct(KernelConfig):
@@ -190,7 +209,7 @@ class RandStruct(KernelConfig):
 
     def _check_vmlinux(self):
         out = self.gdb_exec("p/x (long)tainted_mask")
-        return self.NOSYMBOL not in out and "$1 = 0x0" not in out
+        return self.NOSYMBOL not in out and "$2 = 0x0" not in out
 
 
 class RandomKmallocCaches(KernelConfig):
@@ -242,7 +261,7 @@ def check_config():
         Memcg(),
     ]
     logger.important("Checking kernel configs")
-    if ctx.get(ctx.CONFIG) and False:
+    if ctx.get(ctx.CONFIG):
         check_kconfig(configs)
     else:
         check_vmlinux(configs)

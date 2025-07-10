@@ -125,6 +125,16 @@ def extract_context():
                 ctx.set_path(ctx.BZIMAGE, ctx.root_path(fname), True)
             elif "vmlinux" in fname:
                 ctx.set_path(ctx.VMLINUX, ctx.root_path(fname))
+                vmlinux_info = subprocess.run(
+                    ["file", ctx.get(ctx.VMLINUX)],
+                    stdout=subprocess.PIPE,
+                    text=True,
+                ).stdout
+                ctx.arch = "x86-64"
+                if "aarch64" in vmlinux_info:
+                    ctx.arch = "aarch64"
+                elif "riscv64" in vmlinux_info:
+                    ctx.arch = "riscv64"
             elif fname.endswith(".qcow2") or fname.endswith(".img"):
                 ctx.set_path(ctx.QCOW, ctx.root_path(fname))
             elif fname.endswith(".sh"):

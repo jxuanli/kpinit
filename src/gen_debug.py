@@ -68,10 +68,7 @@ def gen_debug():
             base = int(line.split()[2], 16)
             break
     assert base is not None, "cannot find load base"
-    vmlinux_info = subprocess.run(
-        ["file", ctx.get_path(ctx.VMLINUX)], stdout=subprocess.PIPE, text=True
-    ).stdout
-    if "aarch64" in vmlinux_info:
+    if ctx.arch == "aarch64":
         # for some reason the first 0x10000 bytes of an aarch64 kernel is not mappped
         base += 0x10000
     content = ""

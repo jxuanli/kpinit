@@ -56,6 +56,7 @@ class Context:
             ORIG_LINUX_PATH,
         ],
     ):
+        self.arch = None
         self.settings = {}  # a map of settings
         self.logger = Logger()
         for setting in settings:
