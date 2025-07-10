@@ -106,9 +106,9 @@ class UsermodeHelperConfig(KernelConfig):
         out = self.gdb_exec("disassemble call_usermodehelper_setup")
         if self.NOSYMBOL in out:
             return None
-        return re.search(
-            r"\[r..?\+0x28\],\s*(0x[0-9a-f]+)", out
-        ) is not None # TODO: double check if correct, prob not for aarch64
+        return (
+            re.search(r"\[r..?\+0x28\],\s*(0x[0-9a-f]+)", out) is not None
+        )  # TODO: double check if correct, prob not for aarch64
 
 
 class SlabMergeDefaultConfig(KernelConfig):
