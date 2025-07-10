@@ -108,7 +108,7 @@ class UsermodeHelperConfig(KernelConfig):
             return None
         return re.search(
             r"\[r..?\+0x28\],\s*(0x[0-9a-f]+)", out
-        )  # TODO: double check if correct, prob not for aarch64
+        ) is not None # TODO: double check if correct, prob not for aarch64
 
 
 class SlabMergeDefaultConfig(KernelConfig):

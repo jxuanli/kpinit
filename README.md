@@ -83,9 +83,7 @@ chall/
   - [x] build `./workspace/exploit/exploit.c`
     - include it in `./workspace/challenge/initramfs`
     - recompress `./workspace/challenge/initramfs.cpio.gz` 
-  - [x] Autostart two panes
-    - support either [`zellij`](https://github.com/zellij-org/zellij) or `tmux`
-    - support custom GDB plugin path (this is mainly because the author wants to test out his own pwndbg contributions and it might be different from the one used for userland pwn)
+  - [x] Autostart two panes ([`zellij`](https://github.com/zellij-org/zellij) or `tmux`)
   - [x] Regeneration preserves old `exploit.c`
 - [x] extract `vmlinux` if not already provided
 - [x] run checks on `.config` if exists

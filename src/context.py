@@ -30,12 +30,12 @@ class Context:
     represents a kernel pwn challenge context
     """
 
-    RAMFS = "cpio"
-    BZIMAGE = "bzImage"
+    RAMFS = "ramfs"
+    BZIMAGE = "kernel image"
     RUN_SH = "run.sh"
     VMLINUX = "vmlinux"
-    VULN_KO = "vuln"
-    CONFIG = "kernel_config"
+    VULN_KO = "vuln module"
+    CONFIG = "kernel config"
     QCOW = "qcow"
     LINUX_SRC = "linux source folder"
     ORIG_LINUX_PATH = "original linux source path"

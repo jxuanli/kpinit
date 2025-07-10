@@ -60,7 +60,7 @@ def get_ko_gdb(module_name, ko_path):
 
 def gen_debug():
     vmlinux_info = subprocess.run(
-        ["readelf", "-l", ctx.VMLINUX], capture_output=True, text=True
+        ["readelf", "-l", ctx.get_path(ctx.VMLINUX)], capture_output=True, text=True
     ).stdout
     base = None
     for line in vmlinux_info.splitlines():
