@@ -67,7 +67,8 @@ def gen_debug():
         if "LOAD" in line:
             base = int(line.split()[2], 16)
             break
-    assert base is not None, "cannot find load base"
+    if not base:
+        logger.error(f"cannot find kernel base: {vmlinux_info}")
     if ctx.arch == "aarch64":
         # for some reason the first 0x10000 bytes of an aarch64 kernel is not mappped
         base += 0x10000
@@ -76,13 +77,13 @@ def gen_debug():
     content += kbase_template.format(ctx.vmlinux.wspath, base)
     if ctx.linux_src.get() is not None:
         content += f"set substitute-path ./ {ctx.linux_src.get()}\n"
-        if ctx.origpath.get() is not None:
+        if ctx.build_path.get() is not None:
             content += (
                 f"set substitute-path {ctx.build_path.get()} {ctx.linux_src.get()}\n"
             )
     content += f"add-symbol-file {ctx.exploit_path('exploit')}\n"
     vmlinux_info = subprocess.run(
-        ["readelf", "-SW", ctx.vmlinux.wspath], capture_output=True, text=True
+        ["file", ctx.vmlinux.wspath], capture_output=True, text=True
     ).stdout
     if "debug_info" in vmlinux_info:
         if ctx.vuln_ko.get() is not None:

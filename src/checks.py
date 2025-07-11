@@ -66,8 +66,7 @@ class KernelConfig:
     def msg_if_not_set(self):
         return f"{self.name} is not set: {self._msg_if_not_set}"
 
-    def check_vmlinux(self):
-        is_set = self._check_vmlinux()
+    def print_msg(self, is_set):
         if is_set is None:
             logger.warn(f"{self.name} is not checked")
             return
@@ -81,6 +80,12 @@ class KernelConfig:
                 logger.warn(self.msg_if_not_set)
             else:
                 logger.info(self.msg_if_not_set)
+
+    def check_kconfig(self, configs):
+        self.print_msg(f"{self.name}=y" in configs)
+
+    def check_vmlinux(self):
+        self.print_msg(self._check_vmlinux())
 
     def _check_vmlinux(self):
         return None
@@ -196,7 +201,9 @@ class BpfUnprivDefaultOff(KernelConfig):
         self._msg_if_not_set = "unpriveleged user CAN load BPF programs"
 
     def _check_vmlinux(self):
-        return "$2 = 0x2" in self.gdb_exec("p/x (int)sysctl_unprivileged_bpf_disabled")
+        return "$2 = 0x2" in self.gdb_exec(
+            "p/x *(int *)&sysctl_unprivileged_bpf_disabled"
+        )
 
 
 class RandStruct(KernelConfig):
@@ -207,7 +214,7 @@ class RandStruct(KernelConfig):
         self._msg_if_not_set = "marked structures are NOT randomized"
 
     def _check_vmlinux(self):
-        out = self.gdb_exec("p/x (long)tainted_mask")
+        out = self.gdb_exec("p/x *(long *)&tainted_mask")
         return self.NOSYMBOL not in out and "$2 = 0x0" not in out
 
 
@@ -263,4 +270,11 @@ def check_config():
     if ctx.config.get():
         check_kconfig(configs)
     else:
+        vmlinux_info = subprocess.run(
+            ["file", ctx.vmlinux.get()],
+            stdout=subprocess.PIPE,
+            text=True,
+        ).stdout
+        if "not stripped" not in vmlinux_info:
+            logger.error("vmlinux does not contain kernel symbols")
         check_vmlinux(configs)

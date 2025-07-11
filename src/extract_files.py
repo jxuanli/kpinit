@@ -17,7 +17,8 @@ def decompress_ramfs():
     prev = os.getcwd()
     os.chdir(ram_path)
     subprocess.run(["gunzip", archive_path])
-    assert os.path.isfile(cpio_fpath), "missing cpio: " + cpio_fpath
+    if not os.path.isfile(cpio_fpath):
+        logger.error("missing cpio: " + cpio_fpath)
     subprocess.run([f"cpio -idm < {cpio_fpath}"], shell=True)
     os.remove(cpio_fpath)
     os.chdir(prev)
@@ -63,19 +64,19 @@ def extract_ko():
 
 def extract_vmlinux():
     out = b""
-    if ctx.vmlinux.origpath is None:
-        vmlinux_path = ctx.root_path("vmlinux")
+    vmlinux_path = ctx.root_path("vmlinux")
+    if ctx.vmlinux.get() is None:
         if shutil.which("vmlinux-to-elf") is not None:
             logger.info("Extracting vmlinux...")
             out = subprocess.run(
-                ["vmlinux-to-elf", ctx.bzimage.wspath, vmlinux_path],
+                ["vmlinux-to-elf", ctx.image.wspath, vmlinux_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             ).stdout
             if b"Successfully wrote the new ELF kernel" in out:
                 logger.info("extracted vmlinux with vmlinux-to-elf")
-                ctx.vmlinux.set_path(vmlinux_path)
-    if ctx.vmlinux.origpath is None:
+                ctx.vmlinux.set(vmlinux_path)
+    if ctx.vmlinux.get() is None:
         # fallback
         logger.warn(f"extracting vmlinux with vmlinux-to-elf failed: {out}")
         out = subprocess.check_output(
@@ -83,13 +84,13 @@ def extract_vmlinux():
                 os.path.join(
                     os.path.dirname(os.path.abspath(__file__)), "extract-vmlinux"
                 ),
-                ctx.bzimage.wspath,
+                ctx.image.wspath,
             ]
         )
-        vmlinux_path = ctx.root_path("vmlinux")
+        if len(out) < 0x100:
+            logger.error("failed to extract vmlinux")
         f = open(vmlinux_path, "wb")
         f.write(out)
-        # TODO: seems a bit awkward
         ctx.vmlinux.set(vmlinux_path)
         logger.info("extracted vmlinux with extract-vmlinux")
 
@@ -111,7 +112,7 @@ def extract_vmlinux():
             return
     except subprocess.CalledProcessError as e:
         logger.error(f"Error: {e}")
-    logger.warn("did not find the path in which the kernel is compiled")
+    logger.warn("did not find the path in which the kernel was built")
 
 
 def extract_context():

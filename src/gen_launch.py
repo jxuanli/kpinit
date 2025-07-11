@@ -104,7 +104,8 @@ def get_qemu_arch(command):
     @return: the architecture used for the vm
     """
     bin = command.split()[0]
-    assert bin.startswith(QEMU_MAGIC)
+    if not bin.startswith(QEMU_MAGIC):
+        logger.error("cannot find `qemu-system-` prefix")
     return bin[len(QEMU_MAGIC) :]
 
 
@@ -114,7 +115,8 @@ def get_qemu_cmd(file_bs):
     @return: the qemu command
     """
     idx = file_bs.find(QEMU_MAGIC)
-    assert idx > -1, "can't find qemu_magic in provided file content"
+    if idx < 0:
+        logger.error("can't find qemu_magic in provided file content")
     return file_bs[idx:]
 
 

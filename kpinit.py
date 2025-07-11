@@ -23,6 +23,8 @@ def gen_challenge():
     """
     generate the workspace/challenge directory
     """
+    if not ctx.image.origpath:
+        logger.error("cannot find kernel image file")
     shutil.copy2(ctx.image.origpath, ctx.image.wspath)
     decompress_ramfs()
     extract_qcow()
@@ -48,7 +50,8 @@ def gen_workspace():
     ws_path = ctx.workspace_path()
     if os.path.exists(ws_path):
         ctx.create_logfile()
-        assert os.path.isdir(ws_path)
+        if not os.path.isdir(ws_path):
+            logger.error("previous workspace is not a directory")
         logger.warn(
             "removing existing workspace/challenge and workspace/exploit to generate a new one"
         )

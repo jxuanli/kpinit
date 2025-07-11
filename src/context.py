@@ -34,12 +34,12 @@ class Setting:
         val = val.split("/")[-1]
         if self.name in [
             self.ctx.RAMFS,
-            self.ctx.BZIMAGE,
+            self.ctx.IMAGE,
             self.ctx.QCOW,
             self.ctx.VMLINUX,
         ]:
             return self.ctx.challenge_path(val)
-        elif self.val in [self.ctx.VULN_KO]:
+        elif self.name in [self.ctx.VULN_KO]:
             return self.ctx.exploit_path(val)
         else:
             self.logger.error(f"Invalid setting for: {self.name}")
@@ -64,7 +64,7 @@ class Context:
     """
 
     RAMFS = "ramfs"
-    BZIMAGE = "kernel image"
+    IMAGE = "kernel image"
     RUN_SH = "run.sh"
     VMLINUX = "vmlinux"
     VULN_KO = "vuln module"
@@ -80,7 +80,7 @@ class Context:
         self.settings = {}  # a map of settings
         self.logger = Logger()
         self.ramfs = Setting(self, self.RAMFS)
-        self.image = Setting(self, self.BZIMAGE)
+        self.image = Setting(self, self.IMAGE)
         self.run_sh = Setting(self, self.RUN_SH)
         self.vmlinux = Setting(self, self.VMLINUX)
         self.vuln_ko = Setting(self, self.VULN_KO)
@@ -142,7 +142,7 @@ class Context:
         f.flush()
 
     def fsname(self):
-        return os.path.basename(self.get_path(self.RAMFS)).split(".")[0]
+        return os.path.basename(self.ramfs.wspath).split(".")[0]
 
     def check(self):
         for setting in self.settings:
