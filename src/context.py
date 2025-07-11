@@ -134,6 +134,8 @@ class Context:
                     if setting.name == name and val is not None:
                         setting.set(val)
                         break
+            return True
+        return False
 
     def persist(self):
         f = open(self.wsdir(CONTEXT_FILE), "w")
