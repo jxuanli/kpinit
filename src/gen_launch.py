@@ -156,8 +156,6 @@ def gen_launch():
     compiler = "gcc"
     if "aarch64" in vmlinux_info:
         compiler = "aarch64-linux-gnu-gcc"
-    elif "riscv64" in vmlinux_info:
-        compiler = "riscv64-linux-gnu-gcc"
     script += COMPILE_EXPLOIT.format(compiler)
     if ctx.ramfs.wspath is not None:
         script += CPIO_SCRIPT.format(ctx.fsname(), ctx.ramfs.wspath)
@@ -168,7 +166,6 @@ def gen_launch():
     for option, token in opts.items():
         script += "\\\n\t" + "-" + option + " " + token + " "
 
-    script += "\n\n\nsetterm -linewrap on"  # TODO:
     f = open(launch_fpath, "w")
     f.write(script)
     os.chmod(launch_fpath, 0o700)

@@ -135,8 +135,6 @@ def extract_context():
                 ctx.arch = "x86-64"
                 if "aarch64" in vmlinux_info:
                     ctx.arch = "aarch64"
-                elif "riscv64" in vmlinux_info:
-                    ctx.arch = "riscv64"
             elif fname.endswith(".qcow2") or fname.endswith(".img"):
                 ctx.qcow.set(ctx.rootdir(fname))
             elif fname.endswith(".sh"):

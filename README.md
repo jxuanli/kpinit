@@ -107,7 +107,7 @@ chall/
     - [ ] slubstick
     - [ ] microarch
   - [ ] bpf
-- [x] support `x86-64`, `aarch64`, and `riscv64`
+- [x] support `x86-64` and `aarch64`
 - [x] `qcow` file format support (instead of `cpio`)
 - [x] automatic exploit file serving script
   - the localhost can then be exposed/tunneled with tools such as `ngrok`

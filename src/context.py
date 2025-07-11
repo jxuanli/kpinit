@@ -21,10 +21,7 @@ class Setting:
     def set(self, val: str, is_strict=False):
         if not os.path.exists(val):
             return False
-        self.val = val
-        self.is_strict = is_strict
-        self.ctx.persist()
-        return True
+        self.setval(val, is_strict)
 
     def setval(self, val: str, is_strict=False):
         self.val = val
@@ -98,6 +95,7 @@ class Context:
             self.linux_src,
             self.build_path,
         )
+        self.rootpath = os.getcwd() # challenge root path
 
     def rootdir(self, name=None):
         """
@@ -105,7 +103,7 @@ class Context:
         """
         if name is None:
             name = ""
-        return os.path.join(os.getcwd(), name)
+        return os.path.join(self.rootpath, name)
 
     def wsdir(self, fname=None):
         if fname is None:
