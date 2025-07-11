@@ -7,12 +7,12 @@ from utils import logger, ctx
 def decompress_ramfs():
     if ctx.ramfs.get() is None:
         return
-    shutil.copy2(ctx.ramfs.origpath, ctx.ramfs.wspath)
+    shutil.copy2(ctx.ramfs.get(), ctx.ramfs.wspath)
     fsname = ctx.fsname()
-    ram_path = ctx.challenge_path(fsname)
+    ram_path = ctx.challdir(fsname)
     os.mkdir(ram_path)
     archive_path = os.path.join(ram_path, fsname + ".cpio.gz")
-    shutil.copy(ctx.ramfs.origpath, archive_path)
+    shutil.copy(ctx.ramfs.get(), archive_path)
     cpio_fpath = os.path.join(ram_path, fsname + ".cpio")
     prev = os.getcwd()
     os.chdir(ram_path)
@@ -26,21 +26,21 @@ def decompress_ramfs():
 
 def extract_init():
     if ctx.ramfs.wspath is not None:
-        init_fpath = ctx.challenge_path(f"{ctx.fsname()}/init")
+        init_fpath = ctx.challdir(f"{ctx.fsname()}/init")
         if os.path.isfile(init_fpath):
-            shutil.copy(init_fpath, ctx.exploit_path("init"))
+            shutil.copy(init_fpath, ctx.expdir("init"))
         else:
             logger.warn("did not find init file")
 
 
 def extract_ko():
-    if ctx.vuln_ko.origpath is not None:
-        shutil.copy2(ctx.vuln_ko.origpath, ctx.vuln_ko.wspath)
+    if ctx.vuln_ko.get() is not None:
+        shutil.copy2(ctx.vuln_ko.get(), ctx.vuln_ko.wspath)
         return
     if ctx.ramfs.get() is None:
         return
     mods = []
-    for dir, _, files in os.walk(ctx.root_path()):
+    for dir, _, files in os.walk(ctx.rootdir()):
         for file in files:
             if file.endswith(".ko") and file not in mods:
                 mods.append(os.path.join(dir, file))
@@ -58,13 +58,13 @@ def extract_ko():
     if mod is None or not os.path.exists(mod):
         logger.warn("no kernel loadable modules found")
         return
-    ctx.vuln_ko.set(mod, is_path=False)
-    shutil.copy2(ctx.vuln_ko.origpath, ctx.vuln_ko.wspath)
+    ctx.vuln_ko.set(mod)
+    shutil.copy2(ctx.vuln_ko.get(), ctx.vuln_ko.wspath)
 
 
 def extract_vmlinux():
     out = b""
-    vmlinux_path = ctx.root_path("vmlinux")
+    vmlinux_path = ctx.rootdir("vmlinux")
     if ctx.vmlinux.get() is None:
         if shutil.which("vmlinux-to-elf") is not None:
             logger.info("Extracting vmlinux...")
@@ -94,7 +94,7 @@ def extract_vmlinux():
         ctx.vmlinux.set(vmlinux_path)
         logger.info("extracted vmlinux with extract-vmlinux")
 
-    shutil.copy2(ctx.vmlinux.origpath, ctx.vmlinux.wspath)
+    shutil.copy2(ctx.vmlinux.get(), ctx.vmlinux.wspath)
     try:
         path = (
             subprocess.run(
@@ -107,7 +107,7 @@ def extract_vmlinux():
             .split(" ")[-1]
         )
         if path and len(path) > 0:
-            ctx.build_path.set(path, is_path=False)
+            ctx.build_path.setval(path)
             logger.info(f"found original linux source path at {path}")
             return
     except subprocess.CalledProcessError as e:
@@ -117,16 +117,16 @@ def extract_vmlinux():
 
 def extract_context():
     """
-    generate settings.json file if does not exist, otherwise use the existing settings
+    generate context.json file if does not exist, otherwise use the existing settings
     """
     if not ctx.load():
-        for fname in os.listdir(os.getcwd()):
+        for fname in os.listdir(ctx.rootdir()):
             if fname.endswith(".ko"):
-                ctx.vuln_ko.set(ctx.root_path(fname))
+                ctx.vuln_ko.set(ctx.rootdir(fname))
             elif "Image" in fname or "vmlinuz" in fname:
-                ctx.image.set(ctx.root_path(fname), is_strict=True)
+                ctx.image.set(ctx.rootdir(fname), is_strict=True)
             elif "vmlinux" in fname:
-                ctx.vmlinux.set(ctx.root_path(fname))
+                ctx.vmlinux.set(ctx.rootdir(fname))
                 vmlinux_info = subprocess.run(
                     ["file", ctx.vmlinux.get()],
                     stdout=subprocess.PIPE,
@@ -138,15 +138,15 @@ def extract_context():
                 elif "riscv64" in vmlinux_info:
                     ctx.arch = "riscv64"
             elif fname.endswith(".qcow2") or fname.endswith(".img"):
-                ctx.qcow.set(ctx.root_path(fname))
+                ctx.qcow.set(ctx.rootdir(fname))
             elif fname.endswith(".sh"):
-                ctx.run_sh.set(ctx.root_path(fname), is_strict=True)
-            elif "linux" in fname and os.path.isdir(ctx.root_path(fname)):
-                ctx.linux_src.set(ctx.root_path(fname))
+                ctx.run_sh.set(ctx.rootdir(fname), is_strict=True)
+            elif "linux" in fname and os.path.isdir(ctx.rootdir(fname)):
+                ctx.linux_src.set(ctx.rootdir(fname))
             elif "cpio" in fname or "gz" in fname:
-                ctx.ramfs.set(ctx.root_path(fname))
+                ctx.ramfs.set(ctx.rootdir(fname))
             elif "config" in fname:
-                ctx.config.set(ctx.root_path(fname))
+                ctx.config.set(ctx.rootdir(fname))
     logger.important(ctx)
     ctx.check()
 
@@ -155,4 +155,4 @@ def extract_qcow():
     imgpath = ctx.qcow.get()
     if imgpath is None:
         return
-    shutil.copy2(imgpath, ctx.challenge_path())
+    shutil.copy2(imgpath, ctx.challdir())

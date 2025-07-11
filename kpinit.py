@@ -23,9 +23,9 @@ def gen_challenge():
     """
     generate the workspace/challenge directory
     """
-    if not ctx.image.origpath:
+    if not ctx.image.get():
         logger.error("cannot find kernel image file")
-    shutil.copy2(ctx.image.origpath, ctx.image.wspath)
+    shutil.copy2(ctx.image.get(), ctx.image.wspath)
     decompress_ramfs()
     extract_qcow()
     extract_vmlinux()
@@ -47,7 +47,7 @@ def gen_workspace():
     """
     generate the workspace directory as specified in README.md
     """
-    ws_path = ctx.workspace_path()
+    ws_path = ctx.wsdir()
     if os.path.exists(ws_path):
         ctx.create_logfile()
         if not os.path.isdir(ws_path):
@@ -55,23 +55,23 @@ def gen_workspace():
         logger.warn(
             "removing existing workspace/challenge and workspace/exploit to generate a new one"
         )
-        if os.path.isfile(ctx.exploit_path("exploit.c")):
-            shutil.copy2(ctx.exploit_path("exploit.c"), ctx.workspace_path("exploit.c"))
-        if os.path.isdir(ctx.challenge_path()):
-            shutil.rmtree(ctx.challenge_path())
-        if os.path.isdir(ctx.exploit_path()):
-            shutil.rmtree(ctx.exploit_path())
+        if os.path.isfile(ctx.expdir("exploit.c")):
+            shutil.copy2(ctx.expdir("exploit.c"), ctx.wsdir("exploit.c"))
+        if os.path.isdir(ctx.challdir()):
+            shutil.rmtree(ctx.challdir())
+        if os.path.isdir(ctx.expdir()):
+            shutil.rmtree(ctx.expdir())
     else:
         os.mkdir(ws_path)
         ctx.create_logfile()
-    os.mkdir(ctx.challenge_path())
-    os.mkdir(ctx.exploit_path())
+    os.mkdir(ctx.challdir())
+    os.mkdir(ctx.expdir())
     extract_context()
     gen_challenge()
     gen_exploit()
     # preserves the old exploit
-    if os.path.isfile(ctx.workspace_path("exploit.c")):
-        shutil.copy2(ctx.workspace_path("exploit.c"), ctx.exploit_path("exploit.c"))
+    if os.path.isfile(ctx.wsdir("exploit.c")):
+        shutil.copy2(ctx.wsdir("exploit.c"), ctx.expdir("exploit.c"))
     logger.important("Finished generating workspace")
 
 

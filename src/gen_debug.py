@@ -81,7 +81,7 @@ def gen_debug():
             content += (
                 f"set substitute-path {ctx.build_path.get()} {ctx.linux_src.get()}\n"
             )
-    content += f"add-symbol-file {ctx.exploit_path('exploit')}\n"
+    content += f"add-symbol-file {ctx.expdir('exploit')}\n"
     vmlinux_info = subprocess.run(
         ["file", ctx.vmlinux.wspath], capture_output=True, text=True
     ).stdout
@@ -106,10 +106,10 @@ def gen_debug():
     else:
         logger.warn("no debug info 😢")
 
-    scripts = ctx.exploit_path("scripts.gdb")
+    scripts = ctx.expdir("scripts.gdb")
     content += f"source {scripts}\n"
     content += finished_msg
-    f = open(ctx.challenge_path("debug.gdb"), "w")
+    f = open(ctx.challdir("debug.gdb"), "w")
     f.write(content)
     f = open(scripts, "w")
     # this prob only works on pwndbg

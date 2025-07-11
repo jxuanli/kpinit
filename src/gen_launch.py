@@ -137,8 +137,8 @@ def gen_launch():
                 since this parses the run.sh, it will check the interesting qemu options
                 **checks SMAP, SMEP, KPTI, KASLR, and panic_on_oops**
     """
-    runsh_fpath = ctx.run_sh.origpath
-    launch_fpath = ctx.exploit_path("launch.sh")
+    runsh_fpath = ctx.run_sh.get()
+    launch_fpath = ctx.expdir("launch.sh")
     f = open(runsh_fpath, "r")
     content = f.read()
     qemu_cmd = get_qemu_cmd(content).replace("\\", " ")
@@ -162,8 +162,8 @@ def gen_launch():
     if ctx.ramfs.wspath is not None:
         script += CPIO_SCRIPT.format(ctx.fsname(), ctx.ramfs.wspath)
     gdb = "gdb" if "x86" in vmlinux_info else "gdb-multiarch"
-    gdb += f" -ix {ctx.challenge_path('debug.gdb')}"
-    script += GDB_CMD.format(ctx.challenge_path("debug.gdb"), gdb, gdb)
+    gdb += f" -ix {ctx.challdir('debug.gdb')}"
+    script += GDB_CMD.format(ctx.challdir("debug.gdb"), gdb, gdb)
     script += qemu_cmd.split()[0] + " "
     for option, token in opts.items():
         script += "\\\n\t" + "-" + option + " " + token + " "

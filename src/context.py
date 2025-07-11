@@ -18,9 +18,15 @@ class Setting:
     def get(self):
         return self.val
 
-    def set(self, val: str, is_path: bool = True, is_strict=False):
-        if is_path and not os.path.exists(val):
+    def set(self, val: str, is_strict=False):
+        if not os.path.exists(val):
             return False
+        self.val = val
+        self.is_strict = is_strict
+        self.ctx.persist()
+        return True
+
+    def setval(self, val: str, is_strict=False):
         self.val = val
         self.is_strict = is_strict
         self.ctx.persist()
@@ -38,18 +44,11 @@ class Setting:
             self.ctx.QCOW,
             self.ctx.VMLINUX,
         ]:
-            return self.ctx.challenge_path(val)
+            return self.ctx.challdir(val)
         elif self.name in [self.ctx.VULN_KO]:
-            return self.ctx.exploit_path(val)
+            return self.ctx.expdir(val)
         else:
             self.logger.error(f"Invalid setting for: {self.name}")
-
-    @property
-    def origpath(self):
-        val = self.val
-        if val is None:
-            return None
-        return self.ctx.root_path(val)
 
     def check(self):
         if self.is_strict and self.val is None:
@@ -100,7 +99,7 @@ class Context:
             self.build_path,
         )
 
-    def root_path(self, name=None):
+    def rootdir(self, name=None):
         """
         get cwd file path, just a wrapper!
         """
@@ -108,26 +107,26 @@ class Context:
             name = ""
         return os.path.join(os.getcwd(), name)
 
-    def workspace_path(self, fname=None):
+    def wsdir(self, fname=None):
         if fname is None:
             fname = ""
-        return self.root_path(os.path.join("workspace", fname))
+        return self.rootdir(os.path.join("workspace", fname))
 
-    def challenge_path(self, fname=None):
+    def challdir(self, fname=None):
         if fname is None:
             fname = ""
-        return self.workspace_path(os.path.join("challenge", fname))
+        return self.wsdir(os.path.join("challenge", fname))
 
-    def exploit_path(self, fname=None):
+    def expdir(self, fname=None):
         if fname is None:
             fname = ""
-        return self.workspace_path(os.path.join("exploit", fname))
+        return self.wsdir(os.path.join("exploit", fname))
 
     def load(self):
         """
         return true if can load successfully
         """
-        path = self.workspace_path(CONTEXT_FILE)
+        path = self.wsdir(CONTEXT_FILE)
         if os.path.exists(path):
             deserialized = json.load(open(path, "r"))
             for name, val in deserialized.items():
@@ -137,7 +136,7 @@ class Context:
                         break
 
     def persist(self):
-        f = open(self.workspace_path(CONTEXT_FILE), "w")
+        f = open(self.wsdir(CONTEXT_FILE), "w")
         json.dump(self.serialize(), f, indent=4)
         f.flush()
 
@@ -155,7 +154,7 @@ class Context:
         return serialized
 
     def create_logfile(self):
-        logfile_path = self.workspace_path("log.txt")
+        logfile_path = self.wsdir("log.txt")
         self.logger.logfile = open(logfile_path, "w")
 
     def __repr__(self):
