@@ -23,7 +23,7 @@ def gen_challenge():
     """
     generate the workspace/challenge directory
     """
-    shutil.copy2(ctx.get_path_root(ctx.BZIMAGE), ctx.get_path(ctx.BZIMAGE))
+    shutil.copy2(ctx.image.origpath, ctx.image.wspath)
     decompress_ramfs()
     extract_qcow()
     extract_vmlinux()

@@ -84,14 +84,14 @@ def get_qemu_options(command):
             token += parts[i] + " "
             i += 1
         if option == "kernel":
-            token = ctx.get_path(ctx.BZIMAGE)
+            token = ctx.image.wspath
         elif option == "hda":
-            token = ctx.get_path(ctx.QCOW)
+            token = ctx.qcow.wspath
         elif option == "append":
             token = token.replace("'", "").replace('"', "")
             token = f'"{token} $NOKASLR"'
         elif option == "initrd":
-            token = ctx.get_path(ctx.RAMFS)
+            token = ctx.ramfs.wspath
         elif option == "s" or option == "S":
             continue
         opts[option] = token.strip()
@@ -135,7 +135,7 @@ def gen_launch():
                 since this parses the run.sh, it will check the interesting qemu options
                 **checks SMAP, SMEP, KPTI, KASLR, and panic_on_oops**
     """
-    runsh_fpath = ctx.get_path_root(ctx.RUN_SH)
+    runsh_fpath = ctx.run_sh.origpath
     launch_fpath = ctx.exploit_path("launch.sh")
     f = open(runsh_fpath, "r")
     content = f.read()
@@ -147,7 +147,7 @@ def gen_launch():
         return
     mod_qemu_options(opts)
     vmlinux_info = subprocess.run(
-        ["file", ctx.get_path(ctx.VMLINUX)], stdout=subprocess.PIPE, text=True
+        ["file", ctx.vmlinux.wspath], stdout=subprocess.PIPE, text=True
     ).stdout
     script = HEADER
     script += OPTIONS
@@ -157,8 +157,8 @@ def gen_launch():
     elif "riscv64" in vmlinux_info:
         compiler = "riscv64-linux-gnu-gcc"
     script += COMPILE_EXPLOIT.format(compiler)
-    if ctx.get_path(ctx.RAMFS) is not None:
-        script += CPIO_SCRIPT.format(ctx.fsname(), ctx.get_path(ctx.RAMFS))
+    if ctx.ramfs.wspath is not None:
+        script += CPIO_SCRIPT.format(ctx.fsname(), ctx.ramfs.wspath)
     gdb = "gdb" if "x86" in vmlinux_info else "gdb-multiarch"
     gdb += f" -ix {ctx.challenge_path('debug.gdb')}"
     script += GDB_CMD.format(ctx.challenge_path("debug.gdb"), gdb, gdb)

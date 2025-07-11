@@ -60,7 +60,7 @@ def get_ko_gdb(module_name, ko_path):
 
 def gen_debug():
     vmlinux_info = subprocess.run(
-        ["readelf", "-l", ctx.get_path(ctx.VMLINUX)], capture_output=True, text=True
+        ["readelf", "-l", ctx.vmlinux.wspath], capture_output=True, text=True
     ).stdout
     base = None
     for line in vmlinux_info.splitlines():
@@ -73,20 +73,22 @@ def gen_debug():
         base += 0x10000
     content = ""
     content += "target remote localhost:$PORT\n"
-    content += kbase_template.format(ctx.get(ctx.VMLINUX), base)
-    if ctx.get(ctx.LINUX_SRC) is not None:
-        content += f"set substitute-path ./ {ctx.get(ctx.LINUX_SRC)}\n"
-        if ctx.get(ctx.ORIG_LINUX_PATH) is not None:
-            content += f"set substitute-path {ctx.get(ctx.ORIG_LINUX_PATH)} {ctx.get(ctx.LINUX_SRC)}\n"
+    content += kbase_template.format(ctx.vmlinux.wspath, base)
+    if ctx.linux_src.get() is not None:
+        content += f"set substitute-path ./ {ctx.linux_src.get()}\n"
+        if ctx.origpath.get() is not None:
+            content += (
+                f"set substitute-path {ctx.build_path.get()} {ctx.linux_src.get()}\n"
+            )
     content += f"add-symbol-file {ctx.exploit_path('exploit')}\n"
     vmlinux_info = subprocess.run(
-        ["readelf", "-SW", ctx.get_path(ctx.VMLINUX)], capture_output=True, text=True
+        ["readelf", "-SW", ctx.vmlinux.wspath], capture_output=True, text=True
     ).stdout
     if "debug_info" in vmlinux_info:
-        if ctx.get(ctx.VULN_KO) is not None:
+        if ctx.vuln_ko.get() is not None:
             out = (
                 subprocess.check_output(
-                    ["strings", ctx.get_path(ctx.VULN_KO)], stderr=subprocess.DEVNULL
+                    ["strings", ctx.vuln_ko.wspath], stderr=subprocess.DEVNULL
                 )
                 .decode()
                 .strip()
@@ -99,7 +101,7 @@ def gen_debug():
                 logger.info(f"found module {name}")
             else:
                 logger.warn("module name not found")
-            content += get_ko_gdb(name, ctx.get_path(ctx.VULN_KO))
+            content += get_ko_gdb(name, ctx.vuln_ko.wspath)
     else:
         logger.warn("no debug info 😢")
 

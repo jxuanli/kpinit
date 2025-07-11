@@ -94,7 +94,7 @@ class KernelConfig:
                     gdb,
                     "-batch",
                     "-ex",
-                    f"file {ctx.get(ctx.VMLINUX)}",
+                    f"file {ctx.vmlinux.get()}",
                     "-ex",
                     f"print {MAGICSTR}",
                     "-ex",
@@ -105,7 +105,6 @@ class KernelConfig:
             if MAGICSTR not in res:
                 logger.warn("something went terribly wrong while running gdb")
                 return self.NOSYMBOL
-            print(res)
             return res.split(MAGICSTR)[1]
         except Exception:
             return self.NOSYMBOL
@@ -235,7 +234,7 @@ class Memcg(KernelConfig):
 
 
 def check_kconfig(configs):
-    kconfig = open(ctx.get(ctx.CONFIG), "r").read()
+    kconfig = open(ctx.config.get(), "r").read()
     for config in configs:
         config.check_kconfig(kconfig)
 
@@ -261,7 +260,7 @@ def check_config():
         Memcg(),
     ]
     logger.important("Checking kernel configs")
-    if ctx.get(ctx.CONFIG):
+    if ctx.config.get():
         check_kconfig(configs)
     else:
         check_vmlinux(configs)

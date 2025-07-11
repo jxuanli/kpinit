@@ -1,27 +1,60 @@
 import os
 import json
 from logger import Logger
-from typing import List, Dict
+from typing import Dict
 
 
 CONTEXT_FILE = "context.json"
 
 
 class Setting:
-    key: str
-    val: str
-    isStrict: bool
+    def __init__(self, ctx, name):
+        self.ctx = ctx
+        self.name = name
+        self.val = None
+        self.is_strict = False
+        self.logger = ctx.logger
 
-    def __init__(self, key, val: str = None, isStrict=False, logger=None):
-        self.key = key
+    def get(self):
+        return self.val
+
+    def set(self, val: str, is_path: bool = True, is_strict=False):
+        if is_path and not os.path.exists(val):
+            return False
         self.val = val
-        self.isStrict = isStrict
-        self.logger = logger
+        self.is_strict = is_strict
+        self.ctx.persist()
+        return True
+
+    @property
+    def wspath(self):
+        val = self.val
+        if val is None:
+            return None
+        val = val.split("/")[-1]
+        if self.name in [
+            self.ctx.RAMFS,
+            self.ctx.BZIMAGE,
+            self.ctx.QCOW,
+            self.ctx.VMLINUX,
+        ]:
+            return self.ctx.challenge_path(val)
+        elif self.val in [self.ctx.VULN_KO]:
+            return self.ctx.exploit_path(val)
+        else:
+            self.logger.error(f"Invalid setting for: {self.name}")
+
+    @property
+    def origpath(self):
+        val = self.val
+        if val is None:
+            return None
+        return self.ctx.root_path(val)
 
     def check(self):
-        if self.isStrict and self.val is None:
+        if self.is_strict and self.val is None:
             self.logger.error(
-                f"the setting for {self.key} is invalid, change workspace/{CONTEXT_FILE} in order to proceed"
+                f"the setting for {self.name} is invalid, change workspace/{CONTEXT_FILE} in order to proceed"
             )
 
 
@@ -42,53 +75,30 @@ class Context:
 
     settings: Dict[str, Setting]
 
-    def __init__(
-        self,
-        settings: List[str] = [
-            RAMFS,
-            BZIMAGE,
-            RUN_SH,
-            VMLINUX,
-            VULN_KO,
-            CONFIG,
-            QCOW,
-            LINUX_SRC,
-            ORIG_LINUX_PATH,
-        ],
-    ):
+    def __init__(self):
         self.arch = None
         self.settings = {}  # a map of settings
         self.logger = Logger()
-        for setting in settings:
-            self.settings[setting] = Setting(setting, logger=self.logger)
-
-    def set(self, setting, val=None, isStrict=False):
-        self.settings[setting] = Setting(setting, val, isStrict, logger=self.logger)
-        self.persist()
-
-    def set_path(self, setting, path, isStrict=False):
-        if os.path.exists(path):
-            self.set(setting, path, isStrict)
-            self.persist()
-            return True
-        return False
-
-    def get(self, setting):
-        if setting not in self.settings:
-            return None
-        return self.settings[setting].val
-
-    def get_path(self, setting):
-        val = self.get(setting)
-        if val is None:
-            return None
-        val = val.split("/")[-1]
-        if setting in [self.RAMFS, self.BZIMAGE, self.QCOW, self.VMLINUX]:
-            return self.challenge_path(val)
-        elif setting in [self.VULN_KO]:
-            return self.exploit_path(val)
-        else:
-            self.logger.error(f"Invalid setting {setting}")
+        self.ramfs = Setting(self, self.RAMFS)
+        self.image = Setting(self, self.BZIMAGE)
+        self.run_sh = Setting(self, self.RUN_SH)
+        self.vmlinux = Setting(self, self.VMLINUX)
+        self.vuln_ko = Setting(self, self.VULN_KO)
+        self.config = Setting(self, self.CONFIG)
+        self.qcow = Setting(self, self.QCOW)
+        self.linux_src = Setting(self, self.LINUX_SRC)
+        self.build_path = Setting(self, self.ORIG_LINUX_PATH)
+        self.settings = (
+            self.ramfs,
+            self.image,
+            self.run_sh,
+            self.vmlinux,
+            self.vuln_ko,
+            self.config,
+            self.qcow,
+            self.linux_src,
+            self.build_path,
+        )
 
     def root_path(self, name=None):
         """
@@ -113,12 +123,6 @@ class Context:
             fname = ""
         return self.workspace_path(os.path.join("exploit", fname))
 
-    def get_path_root(self, setting):
-        val = self.get(setting)
-        if val is None:
-            return None
-        return self.root_path(val)
-
     def load(self):
         """
         return true if can load successfully
@@ -126,8 +130,11 @@ class Context:
         path = self.workspace_path(CONTEXT_FILE)
         if os.path.exists(path):
             deserialized = json.load(open(path, "r"))
-            for key, val in deserialized.items():
-                self.set(key, val)
+            for name, val in deserialized.items():
+                for setting in self.settings:
+                    if setting.name == name and val is not None:
+                        setting.set(val)
+                        break
 
     def persist(self):
         f = open(self.workspace_path(CONTEXT_FILE), "w")
@@ -138,13 +145,13 @@ class Context:
         return os.path.basename(self.get_path(self.RAMFS)).split(".")[0]
 
     def check(self):
-        for setting in self.settings.values():
+        for setting in self.settings:
             setting.check()
 
     def serialize(self):
         serialized = {}
-        for name, setting in self.settings.items():
-            serialized[name] = setting.val
+        for setting in self.settings:
+            serialized[setting.name] = setting.val
         return serialized
 
     def create_logfile(self):
