@@ -8,24 +8,25 @@ CONTEXT_FILE = "context.json"
 
 
 class Setting:
-    def __init__(self, ctx, name):
+    def __init__(self, ctx, name, pathfunc=None):
         self.ctx = ctx
         self.name = name
         self.val = None
-        self.is_strict = False
+        self.notnone = False
         self.logger = ctx.logger
+        self.pathfunc = pathfunc
 
     def get(self):
         return self.val
 
-    def set(self, val: str, is_strict=False):
+    def set(self, val: str, notnone=False):
         if not os.path.exists(val):
             return False
-        self.setval(val, is_strict)
+        self.setval(val, notnone)
 
-    def setval(self, val: str, is_strict=False):
+    def setval(self, val: str, notnone=False):
         self.val = val
-        self.is_strict = is_strict
+        self.notnone = notnone
         self.ctx.persist()
         return True
 
@@ -35,20 +36,13 @@ class Setting:
         if val is None:
             return None
         val = val.split("/")[-1]
-        if self.name in [
-            self.ctx.RAMFS,
-            self.ctx.IMAGE,
-            self.ctx.QCOW,
-            self.ctx.VMLINUX,
-        ]:
-            return self.ctx.challdir(val)
-        elif self.name in [self.ctx.VULN_KO]:
-            return self.ctx.expdir(val)
+        if self.pathfunc is not None:
+            return self.pathfunc(val)
         else:
             self.logger.error(f"Invalid setting for: {self.name}")
 
     def check(self):
-        if self.is_strict and self.val is None:
+        if self.notnone and self.val is None:
             self.logger.error(
                 f"the setting for {self.name} is invalid, change workspace/{CONTEXT_FILE} in order to proceed"
             )
@@ -65,25 +59,25 @@ class Context:
     VMLINUX = "vmlinux"
     VULN_KO = "vuln module"
     CONFIG = "kernel config"
-    QCOW = "qcow"
+    EXTRAFILES = "extra files"
     LINUX_SRC = "linux source folder"
     ORIG_LINUX_PATH = "original linux source path"
 
     settings: Dict[str, Setting]
 
     def __init__(self):
+        self.rootpath = os.getcwd()  # challenge root path
         self.arch = None
-        self.settings = {}  # a map of settings
         self.logger = Logger()
-        self.ramfs = Setting(self, self.RAMFS)
-        self.image = Setting(self, self.IMAGE)
+        self.ramfs = Setting(self, self.RAMFS, self.challdir)
+        self.image = Setting(self, self.IMAGE, self.challdir)
         self.run_sh = Setting(self, self.RUN_SH)
-        self.vmlinux = Setting(self, self.VMLINUX)
-        self.vuln_ko = Setting(self, self.VULN_KO)
+        self.vmlinux = Setting(self, self.VMLINUX, self.challdir)
+        self.vuln_ko = Setting(self, self.VULN_KO, self.expdir)
         self.config = Setting(self, self.CONFIG)
-        self.qcow = Setting(self, self.QCOW)
         self.linux_src = Setting(self, self.LINUX_SRC)
         self.build_path = Setting(self, self.ORIG_LINUX_PATH)
+        self.extra_files = Setting(self, self.EXTRAFILES)
         self.settings = (
             self.ramfs,
             self.image,
@@ -91,19 +85,18 @@ class Context:
             self.vmlinux,
             self.vuln_ko,
             self.config,
-            self.qcow,
             self.linux_src,
             self.build_path,
+            self.extra_files,
         )
-        self.rootpath = os.getcwd() # challenge root path
 
-    def rootdir(self, name=None):
+    def rootdir(self, fname=None):
         """
         get cwd file path, just a wrapper!
         """
-        if name is None:
-            name = ""
-        return os.path.join(self.rootpath, name)
+        if fname is None:
+            fname = ""
+        return os.path.join(self.rootpath, fname)
 
     def wsdir(self, fname=None):
         if fname is None:
@@ -130,7 +123,7 @@ class Context:
             for name, val in deserialized.items():
                 for setting in self.settings:
                     if setting.name == name and val is not None:
-                        setting.set(val)
+                        setting.setval(val)
                         break
             return True
         return False
@@ -156,6 +149,16 @@ class Context:
     def create_logfile(self):
         logfile_path = self.wsdir("log.txt")
         self.logger.logfile = open(logfile_path, "w")
+
+    def add_efile(self, relpath):
+        # TODO: handle abspath
+        efiles = self.extra_files.get()
+        if efiles is None:
+            self.extra_files.setval([])
+        efiles = self.extra_files.get()
+        fpath = self.rootdir(relpath)
+        if os.path.exists(fpath) and relpath not in efiles:
+            efiles.append(fpath)
 
     def __repr__(self):
         return f"Context: \n{json.dumps(self.serialize(), indent=4)}\n"

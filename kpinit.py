@@ -13,7 +13,7 @@ from extract_files import (
     extract_context,
     extract_init,
     extract_ko,
-    extract_qcow,
+    copy_efiles,
 )
 from utils import logger, ctx
 from checks import check_config
@@ -27,7 +27,6 @@ def gen_challenge():
         logger.error("cannot find kernel image file")
     shutil.copy2(ctx.image.get(), ctx.image.wspath)
     decompress_ramfs()
-    extract_qcow()
     extract_vmlinux()
 
 
@@ -38,6 +37,7 @@ def gen_exploit():
     gen_launch()
     extract_init()
     extract_ko()
+    copy_efiles()
     gen_debug()
     gen_exploit_src()
     check_config()

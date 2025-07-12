@@ -85,8 +85,6 @@ def get_qemu_options(command):
             i += 1
         if option == "kernel":
             token = ctx.image.wspath
-        elif option == "hda":
-            token = ctx.qcow.wspath
         elif option == "append":
             token = token.replace("'", "").replace('"', "")
             token = f'"{token} $NOKASLR"'
@@ -116,7 +114,7 @@ def get_qemu_cmd(file_bs):
     """
     idx = file_bs.find(QEMU_MAGIC)
     if idx < 0:
-        logger.error("can't find qemu_magic in provided file content")
+        logger.error("Cannot find qemu_magic in provided file content.")
     return file_bs[idx:]
 
 
@@ -126,7 +124,7 @@ def mod_qemu_options(options):
         if opt == "kernel":
             has_kernel = True
     if not has_kernel:
-        logger.error("kernel should be one of the tokens but is not")
+        logger.error("Kernel should be one of the tokens but is not.")
     options["gdb"] = "tcp::$PORT"
 
 
@@ -164,7 +162,10 @@ def gen_launch():
     script += GDB_CMD.format(ctx.challdir("debug.gdb"), gdb, gdb)
     script += qemu_cmd.split()[0] + " "
     for option, token in opts.items():
-        script += "\\\n\t" + "-" + option + " " + token + " "
+        if len(token) > 0:
+            script += " \\\n\t" + f"-{option} {token}"
+        else:
+            script += " \\\n\t" + f"-{option}"
 
     f = open(launch_fpath, "w")
     f.write(script)

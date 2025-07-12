@@ -18,7 +18,7 @@ def decompress_ramfs():
     os.chdir(ram_path)
     subprocess.run(["gunzip", archive_path])
     if not os.path.isfile(cpio_fpath):
-        logger.error("missing cpio: " + cpio_fpath)
+        logger.error("Missing cpio: " + cpio_fpath)
     subprocess.run([f"cpio -idm < {cpio_fpath}"], shell=True)
     os.remove(cpio_fpath)
     os.chdir(prev)
@@ -88,14 +88,15 @@ def extract_vmlinux():
             ]
         )
         if len(out) < 0x100:
-            logger.error("failed to extract vmlinux")
+            logger.error("Failed to extract vmlinux")
         f = open(vmlinux_path, "wb")
         f.write(out)
         ctx.vmlinux.set(vmlinux_path)
-        logger.info("extracted vmlinux with extract-vmlinux")
+        logger.info("Extracted vmlinux with extract-vmlinux")
 
     shutil.copy2(ctx.vmlinux.get(), ctx.vmlinux.wspath)
     try:
+        logger.info("Finding original linux source path...")
         path = (
             subprocess.run(
                 f"readelf --debug-dump=info {ctx.vmlinux.wspath} | grep -m 1 'DW_AT_comp_dir'",
@@ -108,11 +109,21 @@ def extract_vmlinux():
         )
         if path and len(path) > 0:
             ctx.build_path.setval(path)
-            logger.info(f"found original linux source path at {path}")
+            logger.info(f"Found original linux source path at {path}")
             return
     except subprocess.CalledProcessError as e:
         logger.error(f"Error: {e}")
-    logger.warn("did not find the path in which the kernel was built")
+    logger.warn("Could not find riginal linux source path")
+
+
+def copy_efiles():
+    efiles = ctx.extra_files.get()
+    if efiles is None:
+        return
+    for fpath in efiles:
+        if os.path.exists(fpath):
+            new_fpath = ctx.expdir(fpath.split("/")[-1])
+            shutil.copy2(fpath, new_fpath)
 
 
 def extract_context():
@@ -124,7 +135,7 @@ def extract_context():
             if fname.endswith(".ko"):
                 ctx.vuln_ko.set(ctx.rootdir(fname))
             elif "Image" in fname or "vmlinuz" in fname:
-                ctx.image.set(ctx.rootdir(fname), is_strict=True)
+                ctx.image.set(ctx.rootdir(fname), notnone=True)
             elif "vmlinux" in fname:
                 ctx.vmlinux.set(ctx.rootdir(fname))
                 vmlinux_info = subprocess.run(
@@ -136,9 +147,9 @@ def extract_context():
                 if "aarch64" in vmlinux_info:
                     ctx.arch = "aarch64"
             elif fname.endswith(".qcow2") or fname.endswith(".img"):
-                ctx.qcow.set(ctx.rootdir(fname))
+                ctx.add_efile(fname)
             elif fname.endswith(".sh"):
-                ctx.run_sh.set(ctx.rootdir(fname), is_strict=True)
+                ctx.run_sh.set(ctx.rootdir(fname), notnone=True)
             elif "linux" in fname and os.path.isdir(ctx.rootdir(fname)):
                 ctx.linux_src.set(ctx.rootdir(fname))
             elif "cpio" in fname or "gz" in fname:
@@ -147,10 +158,3 @@ def extract_context():
                 ctx.config.set(ctx.rootdir(fname))
     logger.important(ctx)
     ctx.check()
-
-
-def extract_qcow():
-    imgpath = ctx.qcow.get()
-    if imgpath is None:
-        return
-    shutil.copy2(imgpath, ctx.challdir())
