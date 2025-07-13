@@ -47,13 +47,12 @@ rm -rf ./workspace
 ### Features
 - [x] create a new directory structure: 
 ```
-challroot/
+challenge root/
 ├── workspace/ (generated)
 │   ├── context.json
 │   ├── log.txt
+│   ├── vmlinux (if not provided)
 │   ├── challenge/
-│   │   ├── vmlinux
-│   │   ├── bzImage
 │   │   ├── debug.gdb
 │   │   ├── initramfs/
 │   │   └── initramfs.cpio.gz
@@ -62,16 +61,17 @@ challroot/
 │       │   └── (utility files)
 │       ├── launch.sh (improved run.sh)
 │       ├── serve.sh
-│       ├── scripts.gdb
+│       ├── extra.gdb
 │       ├── init
 │       ├── vuln.ko
 │       └── exploit.c (imports files in util/)
 ├── bzImage
 ├── run.sh
 ├── initramfs.cpio.gz
-├── (optional) .config
-├── (optional) vmlinux
-└── (optional) vuln.ko
+├── .config (optional)
+├── vuln.ko (optional)
+├── vmlinux (optional)
+└── ...
 ```
 - [x] generate `./workspace/settings.json` to get the names of provided files
   - [x] auto-generation
@@ -114,7 +114,7 @@ challroot/
     - [ ] microarch
   - [ ] bpf
 - [x] support `x86-64` and `aarch64`
-- [ ] extract files from `.qcow` or `.img` files 
+- [ ] extract files from `.qcow` or `.img` files
 - [x] automatic exploit file serving script
   - the localhost can then be exposed/tunneled with tools such as `ngrok`
 - [x] preserve log

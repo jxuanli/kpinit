@@ -1,4 +1,5 @@
 import os
+import re
 from utils import logger, ctx
 from checks import check_qemu_options
 import shutil
@@ -75,35 +76,15 @@ def get_qemu_options(command):
     i = 1  # skip the qemu bin name
     while i < len(parts):
         if not parts[i].startswith("-"):
-            return None
+            return opts
         option = parts[i][1:]
         token = ""
         i += 1
         while i < len(parts) and not parts[i].startswith("-"):
             token += parts[i] + " "
             i += 1
-        if option == "kernel":
-            token = ctx.image.wspath
-        elif option == "append":
-            token = token.replace("'", "").replace('"', "")
-            token = f'"{token} $NOKASLR"'
-        elif option == "initrd":
-            token = ctx.ramfs.wspath
-        elif option == "s" or option == "S":
-            continue
         opts[option] = token.strip()
     return opts
-
-
-def get_qemu_arch(command):
-    """
-    @command: a valid qemu command
-    @return: the architecture used for the vm
-    """
-    bin = command.split()[0]
-    if not bin.startswith(QEMU_MAGIC):
-        logger.error("cannot find `qemu-system-` prefix")
-    return bin[len(QEMU_MAGIC) :]
 
 
 def get_qemu_cmd(file_bs):
@@ -117,33 +98,60 @@ def get_qemu_cmd(file_bs):
     return file_bs[idx:]
 
 
-def mod_qemu_options(options):
-    has_kernel = False
-    for opt, _ in options.items():
-        if opt == "kernel":
-            has_kernel = True
-    if not has_kernel:
-        logger.error("Kernel should be one of the tokens but is not.")
-    options["gdb"] = "tcp::$PORT"
+def replace_paths(m):
+    path = m.group(0)
+    if os.path.isabs(path):
+        return path
+    if not os.path.exists("./" + path):
+        return path
+    # relative path
+    return ctx.rootdir(path)
+
+
+def replace_append(m):
+    quote = m.group(1)
+    cmdline = m.group(2).strip()
+    return f"-append {quote}{cmdline} $NOKASLR{quote}"
+
+
+def replace_qemuline(line):
+    if line.startswith("-initrd"):
+        return f"-initrd {ctx.ramfs.wspath}"
+    pattern = re.compile(r"(?:\.\.?/|/)[\w./\-\+@%~]+")
+    line = pattern.sub(replace_paths, line)
+    pattern = re.compile(r'-append\s+([\'"])([ -~]*?)\1')
+    line = pattern.sub(replace_append, line)
+    pattern = re.compile(r"(?<!/)[a-zA-Z0-9.]+")
+    line = pattern.sub(replace_paths, line)
+    return line
 
 
 def gen_qemu_cmd():
+    # TODO: add previous
     f = open(ctx.run_sh.get(), "r")
     content = f.read()
-    script = ""
-    qemu_cmd = get_qemu_cmd(content).replace("\\", " ")
-    opts = get_qemu_options(qemu_cmd)
-    if opts is None:
-        return None
-    mod_qemu_options(opts)
-    script += qemu_cmd.split()[0] + " "
-    for option, token in opts.items():
-        if len(token) > 0:
-            script += " \\\n\t" + f"-{option} {token}"
-        else:
-            script += " \\\n\t" + f"-{option}"
+    qemucmd = get_qemu_cmd(content)
+    opts = get_qemu_options(qemucmd.replace("\\", " "))
     check_qemu_options(opts)
-    return script
+    if "\\" in qemucmd:
+        realcmd = ""
+        for line in qemucmd.splitlines():
+            islast = "\\" not in line
+            line = line.split("\\")[0].strip()
+            line = replace_qemuline(line)
+            if len(realcmd) == 0:
+                realcmd = line + " \\\n"
+                continue
+            if not line.lower().startswith("-s "):
+                realcmd += f"\t{line} \\\n"
+            if islast:
+                realcmd += "\t-gdb tcp::$PORT \n"
+                break
+        qemucmd = realcmd
+    else:
+        qemucmd = replace_qemuline(qemucmd.splitlines()[0])
+    # TODO: add the remaining lines
+    return qemucmd
 
 
 def gen_launch():

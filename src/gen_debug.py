@@ -60,7 +60,7 @@ def get_ko_gdb(module_name, ko_path):
 
 def gen_debug():
     vmlinux_info = subprocess.run(
-        ["readelf", "-l", ctx.vmlinux.wspath], capture_output=True, text=True
+        ["readelf", "-l", ctx.vmlinux.get()], capture_output=True, text=True
     ).stdout
     base = None
     for line in vmlinux_info.splitlines():
@@ -74,7 +74,7 @@ def gen_debug():
         base += 0x10000
     content = ""
     content += "target remote localhost:$PORT\n"
-    content += kbase_template.format(ctx.vmlinux.wspath, base)
+    content += kbase_template.format(ctx.vmlinux.get(), base)
     if ctx.linux_src.get() is not None:
         content += f"set substitute-path ./ {ctx.linux_src.get()}\n"
         if ctx.build_path.get() is not None:
@@ -83,7 +83,7 @@ def gen_debug():
             )
     content += f"add-symbol-file {ctx.expdir('exploit')}\n"
     vmlinux_info = subprocess.run(
-        ["file", ctx.vmlinux.wspath], capture_output=True, text=True
+        ["file", ctx.vmlinux.get()], capture_output=True, text=True
     ).stdout
     if "debug_info" in vmlinux_info:
         if ctx.vuln_ko.get() is not None:
@@ -106,12 +106,12 @@ def gen_debug():
     else:
         logger.warn("no debug info 😢")
 
-    scripts = ctx.expdir("scripts.gdb")
-    content += f"source {scripts}\n"
+    extra = ctx.expdir("extra.gdb")
+    content += f"source {extra}\n"
     content += finished_msg
     f = open(ctx.challdir("debug.gdb"), "w")
     f.write(content)
-    f = open(scripts, "w")
+    f = open(extra, "w")
     # this prob only works on pwndbg
     content = ""
     content += "set show-flag on\n"

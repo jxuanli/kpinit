@@ -64,12 +64,12 @@ def extract_ko():
 
 def extract_vmlinux():
     out = b""
-    vmlinux_path = ctx.rootdir("vmlinux")
+    vmlinux_path = ctx.wsdir("vmlinux")  # path used if vmlinux is not provided
     if ctx.vmlinux.get() is None:
         if shutil.which("vmlinux-to-elf") is not None:
             logger.info("Extracting vmlinux...")
             out = subprocess.run(
-                ["vmlinux-to-elf", ctx.image.wspath, vmlinux_path],
+                ["vmlinux-to-elf", ctx.image.get(), vmlinux_path],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             ).stdout
@@ -85,7 +85,7 @@ def extract_vmlinux():
                 os.path.join(
                     os.path.dirname(os.path.abspath(__file__)), "extract-vmlinux"
                 ),
-                ctx.image.wspath,
+                ctx.image.get(),
             ]
         )
         if len(out) < 0x100:
@@ -93,14 +93,14 @@ def extract_vmlinux():
         f = open(vmlinux_path, "wb")
         f.write(out)
         ctx.vmlinux.set(vmlinux_path)
+        ctx.update_arch()
         logger.info("Extracted vmlinux with extract-vmlinux")
 
-    shutil.copy2(ctx.vmlinux.get(), ctx.vmlinux.wspath)
     try:
         logger.info("Finding original linux source path...")
         path = (
             subprocess.run(
-                f"readelf --debug-dump=info {ctx.vmlinux.wspath} | grep -m 1 'DW_AT_comp_dir'",
+                f"readelf --debug-dump=info {ctx.vmlinux.get()} | grep -m 1 'DW_AT_comp_dir'",
                 shell=True,
                 capture_output=True,
                 text=True,
@@ -114,17 +114,7 @@ def extract_vmlinux():
             return
     except subprocess.CalledProcessError as e:
         logger.error(f"Error: {e}")
-    logger.warn("Could not find riginal linux source path")
-
-
-def copy_efiles():
-    efiles = ctx.extra_files.get()
-    if efiles is None:
-        return
-    for fpath in efiles:
-        if os.path.exists(fpath):
-            new_fpath = ctx.expdir(fpath.split("/")[-1])
-            shutil.copy2(fpath, new_fpath)
+    logger.warn("Could not find original linux source path")
 
 
 def extract_context():
@@ -140,8 +130,6 @@ def extract_context():
             elif "vmlinux" in fname and b"\x7fELF" == open(fname, "rb").read(4):
                 ctx.vmlinux.set(ctx.rootdir(fname))
                 ctx.update_arch()
-            elif fname.endswith(".qcow2") or fname.endswith(".img"):
-                ctx.add_efile(fname)
             elif (
                 os.path.isfile(fname)
                 and (

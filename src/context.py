@@ -40,12 +40,14 @@ class Setting:
         if self.pathfunc is not None:
             return self.pathfunc(val)
         else:
-            self.logger.error(f"Invalid setting for: {self.name}")
+            self.logger.error(
+                f"wspath called on setting {self.name} which is invalid. Raise a Github issue if you see this."
+            )
 
     def check(self):
         if self.notnone and self.val is None:
             self.logger.error(
-                f"the setting for {self.name} is invalid, change workspace/{CONTEXT_FILE} in order to proceed"
+                f"The setting for {self.name} is invalid, change workspace/{CONTEXT_FILE} in order to proceed"
             )
 
 
@@ -71,14 +73,13 @@ class Context:
         self.arch = None
         self.logger = Logger()
         self.ramfs = Setting(self, self.RAMFS, self.challdir)
-        self.image = Setting(self, self.IMAGE, self.challdir)
+        self.image = Setting(self, self.IMAGE)
         self.run_sh = Setting(self, self.RUN_SH)
-        self.vmlinux = Setting(self, self.VMLINUX, self.challdir)
+        self.vmlinux = Setting(self, self.VMLINUX)
         self.vuln_ko = Setting(self, self.VULN_KO, self.expdir)
         self.config = Setting(self, self.CONFIG)
         self.linux_src = Setting(self, self.LINUX_SRC)
         self.build_path = Setting(self, self.ORIG_LINUX_PATH)
-        self.extra_files = Setting(self, self.EXTRAFILES)
         self.settings = (
             self.ramfs,
             self.image,
@@ -88,7 +89,6 @@ class Context:
             self.config,
             self.linux_src,
             self.build_path,
-            self.extra_files,
         )
 
     def rootdir(self, fname=None):
@@ -97,7 +97,8 @@ class Context:
         """
         if fname is None:
             fname = ""
-        return os.path.join(self.rootpath, fname)
+        path = os.path.join(self.rootpath, fname)
+        return os.path.abspath(path)
 
     def wsdir(self, fname=None):
         if fname is None:
@@ -152,16 +153,6 @@ class Context:
     def create_logfile(self):
         logfile_path = self.wsdir("log.txt")
         self.logger.logfile = open(logfile_path, "w")
-
-    def add_efile(self, relpath):
-        # TODO: handle abspath
-        efiles = self.extra_files.get()
-        if efiles is None:
-            self.extra_files.setval([])
-        efiles = self.extra_files.get()
-        fpath = self.rootdir(relpath)
-        if os.path.exists(fpath) and relpath not in efiles:
-            efiles.append(fpath)
 
     def update_arch(self):
         vmlinux = self.vmlinux.get()
