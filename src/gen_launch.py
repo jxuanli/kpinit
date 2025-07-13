@@ -1,5 +1,4 @@
 import os
-import subprocess
 from utils import logger, ctx
 from checks import check_qemu_options
 import shutil
@@ -146,18 +145,15 @@ def gen_launch():
         shutil.copy2(runsh_fpath, launch_fpath)
         return
     mod_qemu_options(opts)
-    vmlinux_info = subprocess.run(
-        ["file", ctx.vmlinux.wspath], stdout=subprocess.PIPE, text=True
-    ).stdout
     script = HEADER
     script += OPTIONS
     compiler = "gcc"
-    if "aarch64" in vmlinux_info:
+    if "aarch64" == ctx.arch:
         compiler = "aarch64-linux-gnu-gcc"
     script += COMPILE_EXPLOIT.format(compiler)
     if ctx.ramfs.wspath is not None:
         script += CPIO_SCRIPT.format(ctx.fsname(), ctx.ramfs.wspath)
-    gdb = "gdb" if "x86" in vmlinux_info else "gdb-multiarch"
+    gdb = "gdb" if "x86" in ctx.arch else "gdb-multiarch"
     gdb += f" -ix {ctx.challdir('debug.gdb')}"
     script += GDB_CMD.format(ctx.challdir("debug.gdb"), gdb, gdb)
     script += qemu_cmd.split()[0] + " "

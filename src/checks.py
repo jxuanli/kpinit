@@ -8,14 +8,15 @@ def check_cpu_option(opt):
     @opt: the cpu option for the qemu command
     @effect: prints out checks on cpu option
     """
-    if "+smep" in opt:
-        logger.warn("SMEP enabled")
-    else:
-        logger.info("SMEP disabled")
-    if "+smap" in opt:
-        logger.warn("SMAP enabled")
-    else:
-        logger.info("SMAP disabled")
+    if ctx.arch == "x86-64":
+        if "+smep" in opt:
+            logger.warn("SMEP enabled")
+        else:
+            logger.info("SMEP disabled")
+        if "+smap" in opt:
+            logger.warn("SMAP enabled")
+        else:
+            logger.info("SMAP disabled")
 
 
 def check_append_option(opt):

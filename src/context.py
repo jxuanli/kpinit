@@ -1,5 +1,6 @@
 import os
 import json
+import subprocess
 from logger import Logger
 from typing import Dict
 
@@ -159,6 +160,21 @@ class Context:
         fpath = self.rootdir(relpath)
         if os.path.exists(fpath) and relpath not in efiles:
             efiles.append(fpath)
+
+    def update_arch(self):
+        vmlinux = self.vmlinux.get()
+        if vmlinux is None:
+            self.logger.error(
+                "Could not find vmlinux. Raise a Github issue if you see this message."
+            )
+        vmlinux_info = subprocess.run(
+            ["file", vmlinux],
+            stdout=subprocess.PIPE,
+            text=True,
+        ).stdout
+        self.arch = "x86-64"
+        if "aarch64" in vmlinux_info:
+            self.arch = "aarch64"
 
     def __repr__(self):
         return f"Context: \n{json.dumps(self.serialize(), indent=4)}\n"

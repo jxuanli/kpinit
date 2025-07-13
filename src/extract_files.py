@@ -76,6 +76,7 @@ def extract_vmlinux():
             if b"Successfully wrote the new ELF kernel" in out:
                 logger.info("extracted vmlinux with vmlinux-to-elf")
                 ctx.vmlinux.set(vmlinux_path)
+                ctx.update_arch()
     if ctx.vmlinux.get() is None:
         # fallback
         logger.warn(f"extracting vmlinux with vmlinux-to-elf failed: {out}")
@@ -136,19 +137,19 @@ def extract_context():
                 ctx.vuln_ko.set(ctx.rootdir(fname))
             elif "Image" in fname or "vmlinuz" in fname:
                 ctx.image.set(ctx.rootdir(fname), notnone=True)
-            elif "vmlinux" in fname:
+            elif "vmlinux" in fname and b"\x7fELF" == open(fname, "rb").read(4):
                 ctx.vmlinux.set(ctx.rootdir(fname))
-                vmlinux_info = subprocess.run(
-                    ["file", ctx.vmlinux.get()],
-                    stdout=subprocess.PIPE,
-                    text=True,
-                ).stdout
-                ctx.arch = "x86-64"
-                if "aarch64" in vmlinux_info:
-                    ctx.arch = "aarch64"
+                ctx.update_arch()
             elif fname.endswith(".qcow2") or fname.endswith(".img"):
                 ctx.add_efile(fname)
-            elif fname.endswith(".sh"):
+            elif (
+                os.path.isfile(fname)
+                and (
+                    fname.endswith(".sh")
+                    or any(name in fname for name in ["start", "run", "launch"])
+                )
+                and open(fname, "rb").read(0x1000)
+            ):
                 ctx.run_sh.set(ctx.rootdir(fname), notnone=True)
             elif "linux" in fname and os.path.isdir(ctx.rootdir(fname)):
                 ctx.linux_src.set(ctx.rootdir(fname))
