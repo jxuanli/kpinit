@@ -4,7 +4,7 @@ from checks import check_qemu_options
 import shutil
 
 QEMU_MAGIC = "qemu-system-"
-HEADER = """#!/bin/sh
+HEADER = """#!/bin/bash
 """
 OPTIONS = """
 NOKASLR=""
@@ -127,6 +127,25 @@ def mod_qemu_options(options):
     options["gdb"] = "tcp::$PORT"
 
 
+def gen_qemu_cmd():
+    f = open(ctx.run_sh.get(), "r")
+    content = f.read()
+    script = ""
+    qemu_cmd = get_qemu_cmd(content).replace("\\", " ")
+    opts = get_qemu_options(qemu_cmd)
+    if opts is None:
+        return None
+    mod_qemu_options(opts)
+    script += qemu_cmd.split()[0] + " "
+    for option, token in opts.items():
+        if len(token) > 0:
+            script += " \\\n\t" + f"-{option} {token}"
+        else:
+            script += " \\\n\t" + f"-{option}"
+    check_qemu_options(opts)
+    return script
+
+
 def gen_launch():
     """
     @assume: the directory structure in README.md has been created
@@ -134,17 +153,7 @@ def gen_launch():
                 since this parses the run.sh, it will check the interesting qemu options
                 **checks SMAP, SMEP, KPTI, KASLR, and panic_on_oops**
     """
-    runsh_fpath = ctx.run_sh.get()
     launch_fpath = ctx.expdir("launch.sh")
-    f = open(runsh_fpath, "r")
-    content = f.read()
-    qemu_cmd = get_qemu_cmd(content).replace("\\", " ")
-    opts = get_qemu_options(qemu_cmd)
-    if opts is None:
-        logger.warn("Unexpected boot script format detected.")
-        shutil.copy2(runsh_fpath, launch_fpath)
-        return
-    mod_qemu_options(opts)
     script = HEADER
     script += OPTIONS
     compiler = "gcc"
@@ -156,15 +165,12 @@ def gen_launch():
     gdb = "gdb" if "x86" in ctx.arch else "gdb-multiarch"
     gdb += f" -ix {ctx.challdir('debug.gdb')}"
     script += GDB_CMD.format(ctx.challdir("debug.gdb"), gdb, gdb)
-    script += qemu_cmd.split()[0] + " "
-    for option, token in opts.items():
-        if len(token) > 0:
-            script += " \\\n\t" + f"-{option} {token}"
-        else:
-            script += " \\\n\t" + f"-{option}"
-
+    qemucmd = gen_qemu_cmd()
+    if qemucmd is None:
+        logger.warn("Unexpected boot script format detected.")
+        shutil.copy2(ctx.run_sh.get(), launch_fpath)
+        return
+    script += qemucmd
     f = open(launch_fpath, "w")
     f.write(script)
     os.chmod(launch_fpath, 0o700)
-
-    check_qemu_options(opts)
