@@ -126,6 +126,8 @@ class Context:
                     if setting.name == name and val is not None:
                         setting.setval(val)
                         break
+            if self.vmlinux.get() is not None:
+                self.update_arch()
             return True
         return False
 

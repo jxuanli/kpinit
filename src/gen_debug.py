@@ -68,7 +68,7 @@ def gen_debug():
             base = int(line.split()[2], 16)
             break
     if not base:
-        logger.error(f"cannot find kernel base: {vmlinux_info}")
+        logger.error(f"Cannot find kernel base: {vmlinux_info}")
     if ctx.arch == "aarch64":
         # for some reason the first 0x10000 bytes of an aarch64 kernel is not mappped
         base += 0x10000
@@ -99,9 +99,9 @@ def gen_debug():
                 if len(line) < 20 and line.startswith("name=") and line[5:].isalnum():
                     name = line[5:]
             if len(name) > 0:
-                logger.info(f"found module {name}")
+                logger.info(f"Found module {name}")
             else:
-                logger.warn("module name not found")
+                logger.warn("Module name not found")
             content += get_ko_gdb(name, ctx.vuln_ko.wspath)
     else:
         logger.warn("no debug info 😢")

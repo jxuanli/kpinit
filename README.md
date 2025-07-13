@@ -30,6 +30,7 @@ echo "alias kpinit='python3 $PWD/kpinit/kpinit.py'" >>~/.bash_aliases
 ```
 
 ### Usage
+With only one command, `kpinit` sets up the kernel pwning workspace that you need!
 ```bash
 cd <CHALLENGE_DIR>
 kpinit
@@ -37,11 +38,16 @@ cd workspace/exploit
 ./launch.sh [--gdb] [--nokaslr] [--port <port>]
 ```
 
+Removing all generated files is as simple as:
+```bash
+rm -rf ./workspace
+```
+
 
 ### Features
 - [x] create a new directory structure: 
 ```
-chall/
+challroot/
 ├── workspace/ (generated)
 │   ├── context.json
 │   ├── log.txt

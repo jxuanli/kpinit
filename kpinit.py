@@ -24,7 +24,7 @@ def gen_challenge():
     generate the workspace/challenge directory
     """
     if not ctx.image.get():
-        logger.error("cannot find kernel image file")
+        logger.error("Cannot find kernel image file")
     shutil.copy2(ctx.image.get(), ctx.image.wspath)
     decompress_ramfs()
     extract_vmlinux()
@@ -51,10 +51,11 @@ def gen_workspace():
     if os.path.exists(ws_path):
         ctx.create_logfile()
         if not os.path.isdir(ws_path):
-            logger.error("previous workspace is not a directory")
+            logger.error("Previous workspace is not a directory")
         logger.warn(
-            "removing existing workspace/challenge and workspace/exploit to generate a new one"
+            "Removing existing workspace/challenge and workspace/exploit to generate a new one"
         )
+        # preserves the old exploit
         if os.path.isfile(ctx.expdir("exploit.c")):
             shutil.copy2(ctx.expdir("exploit.c"), ctx.wsdir("exploit.c"))
         if os.path.isdir(ctx.challdir()):
@@ -69,7 +70,7 @@ def gen_workspace():
     extract_context()
     gen_challenge()
     gen_exploit()
-    # preserves the old exploit
+    # recovers the old exploit
     if os.path.isfile(ctx.wsdir("exploit.c")):
         shutil.copy2(ctx.wsdir("exploit.c"), ctx.expdir("exploit.c"))
     logger.important("Finished generating workspace")

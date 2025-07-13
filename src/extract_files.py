@@ -30,7 +30,7 @@ def extract_init():
         if os.path.isfile(init_fpath):
             shutil.copy(init_fpath, ctx.expdir("init"))
         else:
-            logger.warn("did not find init file")
+            logger.warn("Did not find init file")
 
 
 def extract_ko():
@@ -48,15 +48,15 @@ def extract_ko():
     if len(mods) > 0:
         mod = mods[0]
         if len(mods) > 1:
-            logger.info(f"modules: {mods}")
-            logger.warn("detected multiple loadable modules, select which one ❱")
+            logger.info(f"Modules: {mods}")
+            logger.warn("Detected multiple loadable modules, select which one ❱")
             mod_substr = input()
             for m in mods:
                 if mod_substr in m:
                     mod = m
                     break
     if mod is None or not os.path.exists(mod):
-        logger.warn("no kernel loadable modules found")
+        logger.warn("No kernel loadable modules found")
         return
     ctx.vuln_ko.set(mod)
     shutil.copy2(ctx.vuln_ko.get(), ctx.vuln_ko.wspath)
@@ -74,12 +74,12 @@ def extract_vmlinux():
                 stderr=subprocess.STDOUT,
             ).stdout
             if b"Successfully wrote the new ELF kernel" in out:
-                logger.info("extracted vmlinux with vmlinux-to-elf")
+                logger.info("Extracted vmlinux with vmlinux-to-elf")
                 ctx.vmlinux.set(vmlinux_path)
                 ctx.update_arch()
     if ctx.vmlinux.get() is None:
         # fallback
-        logger.warn(f"extracting vmlinux with vmlinux-to-elf failed: {out}")
+        logger.warn(f"Extracting vmlinux with vmlinux-to-elf failed: {out}")
         out = subprocess.check_output(
             [
                 os.path.join(

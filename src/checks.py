@@ -109,7 +109,7 @@ class KernelConfig:
                 stderr=subprocess.DEVNULL,
             ).decode()
             if MAGICSTR not in res:
-                logger.warn("something went terribly wrong while running gdb")
+                logger.warn("Something went terribly wrong while running gdb")
                 return self.NOSYMBOL
             return res.split(MAGICSTR)[1]
         except Exception:
@@ -277,5 +277,5 @@ def check_config():
             text=True,
         ).stdout
         if "not stripped" not in vmlinux_info:
-            logger.error("vmlinux does not contain kernel symbols")
+            logger.error("Vmlinux does not contain kernel symbols")
         check_vmlinux(configs)
