@@ -2,7 +2,7 @@
 
 One of the most challenging aspects of kernel pwning, from my experience, is setting up an efficient debugging environment. Therefore, this project aims to streamline the kernel pwning setup and debugging process. It generates a kernel-pwning workspace that accelerates exploit development by enabling fast experimentation on various kernel exploits.
 
-### Design philosophies
+## Design philosophies
 
 A kernel pwning workspace
 - is localized: easy to remove and regenerate
@@ -11,32 +11,32 @@ A kernel pwning workspace
 - is organized and generated to accelerate exploit development: contains a subset of helpers provided by `pwntools`
 - is as customizable as possible
 
-### Acknowledgements
+## Acknowledgements
 
 This project is inspired by [`kernelinit`](https://github.com/Myldero/kernelinit).
 
 Lots of thanks to [`Jacob`](https://github.com/jacobgnewman) for early testing.
 
-### Installation
+## Installation
 
 ```bash
 git clone https://github.com/jxuanli/kpinit.git
 echo "alias kpinit='python3 $PWD/kpinit/kpinit.py'" >>~/.bash_aliases
 ```
 
-#### [`vmlinux-to-elf`](https://github.com/marin-m/vmlinux-to-elf) installation
+### [`vmlinux-to-elf`](https://github.com/marin-m/vmlinux-to-elf) installation
 ```bash
 sudo apt -y install python3-pip liblzo2-dev
 pip3 install --upgrade git+https://github.com/marin-m/vmlinux-to-elf
 ```
 
-### Demo
+## Demo
 
 
 https://github.com/user-attachments/assets/4d62da41-29a4-4f8d-8c3e-95a849c8a613
 
 
-### Usage
+## Usage
 With only one command, `kpinit` sets up the kernel pwning workspace that you need!
 ```bash
 cd <challenge directory>
@@ -50,19 +50,19 @@ Removing all generated files is as simple as:
 rm -rf ./workspace
 ```
 
-#### File paths detection
+### File paths detection
 
 `workspace/context.json` contains file paths used to extract information for static analysis and file generation. Instead of having to specify paths with command options, `kpinit` automatically detects needed files for creating a kernel-pwning workspace. This reduces the need for manual setup. When detection fails, the user can manually specify the paths.
 
-#### GDB scripting
+### GDB scripting
 Generic GDB scripts for adding symbol files (vmlinux and loadable modules) are included in `workspace/challenge/debug.gdb`. Offsets are automatically computed when KASLR is enabled. Extra GDB scripting can be added in `workspace/exploit/extra.gdb`.
 
-#### Known issues
+### Known issues
 `kpinit` parses and regenerates `qemu` commands for modifying the `qemu` command and placing the generated `launch.sh` in a different directory. Although it correctly parses most launch files (that contain the `qemu` command), it occasionally fails and generates incorrect `qemu` commands. In those cases, users need to manually fix `launch.sh`. Because the launch file format does not follow a consistent pattern, I believe this is acceptable.
 
 See [`Features`](https://github.com/jxuanli/kpinit/tree/main?tab=readme-ov-file#features) section for more usages.
 
-### Features
+## Features
 - [x] generates a new directory with the following structure: 
 ```
 challenge dir/
