@@ -15,7 +15,7 @@ A kernel pwning workspace
 
 This project is inspired by [`kernelinit`](https://github.com/Myldero/kernelinit).
 
-Lots of thanks to [`jacobgnewman`](https://github.com/jacobgnewman) for early testing.
+Lots of thanks to [`Jacob`](https://github.com/jacobgnewman) for early testing.
 
 ### Installation
 
@@ -29,6 +29,10 @@ echo "alias kpinit='python3 $PWD/kpinit/kpinit.py'" >>~/.bash_aliases
 sudo apt -y install python3-pip liblzo2-dev
 pip3 install --upgrade git+https://github.com/marin-m/vmlinux-to-elf
 ```
+
+### Demo
+![demo.mp4](assets/demo.mp4)
+
 
 ### Usage
 With only one command, `kpinit` sets up the kernel pwning workspace that you need!
@@ -54,7 +58,7 @@ Generic GDB scripts for adding symbol files (vmlinux and loadable modules) are i
 #### Known issues
 `kpinit` parses and regenerates `qemu` commands for modifying the `qemu` command and placing the generated `launch.sh` in a different directory. Although it correctly parses most launch files (that contain the `qemu` command), it occasionally fails and generates incorrect `qemu` commands. In those cases, users need to manually fix `launch.sh`. Because the launch file format does not follow a consistent pattern, I believe this is acceptable.
 
-See the Features section for more.
+See [`Features`](https://github.com/jxuanli/kpinit/tree/main?tab=readme-ov-file#features) section for more usages.
 
 ### Features
 - [x] generates a new directory with the following structure: 
@@ -92,8 +96,8 @@ challenge dir/
   - [x] compiles `./workspace/exploit/exploit.c`
     - includes it in `./workspace/challenge/initramfs`
     - recompresses `./workspace/challenge/initramfs.cpio.gz` 
-  - [x] Autostart two panes ([`zellij`](https://github.com/zellij-org/zellij) or `tmux`)
-  - [x] Regeneration preserves old `exploit.c`
+  - [x] autostarts two panes ([`zellij`](https://github.com/zellij-org/zellij) or `tmux`)
+  - [x] regeneration preserves old `exploit.c`
 - [x] extracts `vmlinux` if not already provided (`vmlinux-to-elf`)
 - [x] runs checks on the kernel configuration file if it exists
   - [x] runs checks on `vmlinux` if the configuration file does not exist and `vmlinux` is not stripped
@@ -103,7 +107,7 @@ challenge dir/
   - [x] adds `vuln.ko` symbols if they exist (when `vmlinux` contains `debug_info`)
   - [x] sources Linux source code
   - [x] supports custom breakpoints
-- [ ] generates exploit helpers
+- [ ] generates exploit helpers (See [DOC.md](https://github.com/jxuanli/kpinit/blob/main/DOC.md) for documentations)
   - `info`, `warn`, `error`, `important`, `input`, `cyclic`, etc (similar to those in pwntools)
   - retspill, `modprobe_path`, `core_dump`
   - [ ] bpf

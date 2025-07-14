@@ -67,7 +67,7 @@ def extract_vmlinux():
     vmlinux_path = ctx.wsdir("vmlinux")  # path used if vmlinux is not provided
     if ctx.vmlinux.get() is None:
         if shutil.which("vmlinux-to-elf") is not None:
-            logger.info("Extracting vmlinux...")
+            logger.info("Extracting vmlinux... (might take a minute)")
             out = subprocess.run(
                 ["vmlinux-to-elf", ctx.image.get(), vmlinux_path],
                 stdout=subprocess.PIPE,

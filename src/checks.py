@@ -224,7 +224,7 @@ class RandomKmallocCaches(KernelConfig):
     def __init__(self):
         self.name = "CONFIG_RANDOM_KMALLOC_CACHES"
         self.is_config_set_desired = False
-        self._msg_if_set = "Multiple copies of slab caches are used for normal kmalloc"
+        self._msg_if_set = "multiple copies of slab caches are used for normal kmalloc"
         self._msg_if_not_set = "One copy of slab caches is used for normal kmalloc"
 
     def _check_vmlinux(self):
