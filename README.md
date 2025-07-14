@@ -31,7 +31,9 @@ pip3 install --upgrade git+https://github.com/marin-m/vmlinux-to-elf
 ```
 
 ### Demo
-![demo.mp4](assets/demo.mp4)
+
+
+https://github.com/user-attachments/assets/4d62da41-29a4-4f8d-8c3e-95a849c8a613
 
 
 ### Usage
