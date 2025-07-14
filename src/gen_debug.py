@@ -13,6 +13,7 @@ print(module_list)
 head = module_list
 target_text_addr = None
 while True:
+    # TODO: check kernel version
     head = int(gdb.parse_and_eval(f'((struct list_head *) ({{head}}))->next'))
     module = head - shifted_by
     module_name_addr = int(gdb.parse_and_eval(f'(void *)(&((struct module *) ({{module}}))->name[0])'))
@@ -52,10 +53,6 @@ print("finished sourcing files")
 end
 c
 """
-
-
-def get_ko_gdb(module_name, ko_path):
-    return ko_gdb_template.format(module_name=module_name, ko_path=ko_path)
 
 
 def gen_debug():
@@ -102,7 +99,9 @@ def gen_debug():
                 logger.info(f"Found module {name}")
             else:
                 logger.warn("Module name not found")
-            content += get_ko_gdb(name, ctx.vuln_ko.wspath)
+            content += ko_gdb_template.format(
+                module_name=name, ko_path=ctx.vuln_ko.wspath
+            )
     else:
         logger.warn("no debug info 😢")
 
@@ -112,8 +111,7 @@ def gen_debug():
     f = open(ctx.challdir("debug.gdb"), "w")
     f.write(content)
     f = open(extra, "w")
-    # this prob only works on pwndbg
-    content = ""
+    content = "# default\n"
     content += "set show-flag on\n"
     content += "set exception-debugger on\n"
     f.write(content)

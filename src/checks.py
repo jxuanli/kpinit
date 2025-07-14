@@ -3,51 +3,52 @@ import subprocess
 import re
 
 
-def check_cpu_option(opt):
+def check_cpu(cpu):
     """
     @opt: the cpu option for the qemu command
     @effect: prints out checks on cpu option
     """
     if ctx.arch == "x86-64":
-        if "+smep" in opt:
+        if "+smep" in cpu:
             logger.warn("SMEP enabled")
         else:
             logger.info("SMEP disabled")
-        if "+smap" in opt:
+        if "+smap" in cpu:
             logger.warn("SMAP enabled")
         else:
             logger.info("SMAP disabled")
 
 
-def check_append_option(opt):
+def check_append(append):
     """
     @opt: the append option for the qemu command
     @effect: prints out checks on append option
     """
-    if "nokaslr" in opt:
+    if "nokaslr" in append:
         logger.info("KASLR disabled")
     else:
         logger.warn("KASLR enabled")
-    if "oops=panic" in opt or "panic_on_oops=1" in opt:
+    if "oops=panic" in append or "panic_on_oops=1" in append:
         logger.warn("Kernel panic on oops")
     else:
         logger.info("panic_on_oops disabled")
-    if "kpti=1" in opt or "pti=on" in opt:
+    if "kpti=1" in append or "pti=on" in append:
         logger.warn("KPTI enabled")
     else:
         logger.info("KPTI disabled")
 
 
-def check_qemu_options(tokens):
+def check_qemu(tokens):
     logger.important("Checking qemu command line options")
+    runsh = open(ctx.run_sh.get(), "r").read()
     if "cpu" in tokens:
-        check_cpu_option(tokens["cpu"])
+        check_cpu(tokens["cpu"])
     else:
-        check_cpu_option("")
+        check_cpu(runsh)
     if "append" in tokens:
-        check_append_option(tokens["append"])
+        check_append(tokens["append"])
     else:
-        check_append_option("")
+        check_append(runsh)
 
 
 class KernelConfig:

@@ -1,7 +1,7 @@
 import os
 import re
 from utils import logger, ctx
-from checks import check_qemu_options
+from checks import check_qemu
 import shutil
 
 QEMU_MAGIC = "qemu-system-"
@@ -132,7 +132,7 @@ def gen_qemu_cmd():
     content = f.read()
     qemucmd = get_qemu_cmd(content)
     opts = get_qemu_options(qemucmd.replace("\\", " "))
-    check_qemu_options(opts)
+    check_qemu(opts)
     if "\\" in qemucmd:
         realcmd = ""
         for line in qemucmd.splitlines():
