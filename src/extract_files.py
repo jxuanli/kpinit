@@ -12,11 +12,14 @@ def decompress_ramfs():
     ram_path = ctx.challdir(fsname)
     os.mkdir(ram_path)
     archive_path = os.path.join(ram_path, fsname + ".cpio.gz")
-    shutil.copy(ctx.ramfs.get(), archive_path)
     cpio_fpath = os.path.join(ram_path, fsname + ".cpio")
     prev = os.getcwd()
     os.chdir(ram_path)
-    subprocess.run(["gunzip", archive_path])
+    if ctx.ramfs.get().endswith(".gz"):
+        shutil.copy(ctx.ramfs.get(), archive_path)
+        subprocess.run(["gunzip", archive_path])
+    else:
+        shutil.copy(ctx.ramfs.get(), cpio_fpath)
     if not os.path.isfile(cpio_fpath):
         logger.error("Missing cpio: " + cpio_fpath)
     subprocess.run([f"cpio -idm < {cpio_fpath}"], shell=True)

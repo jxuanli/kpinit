@@ -239,7 +239,7 @@ class Memcg(KernelConfig):
         self._msg_if_not_set = "cg-caches do not exist"
 
     def _check_vmlinux(self):
-        return self.NOSYMBOL not in self.gdb_exec("p/x &kpagecgroup_proc_ops")
+        return self.NOSYMBOL not in self.gdb_exec("p/x &memcg_to_vmpressure")
 
 
 def check_kconfig(configs):

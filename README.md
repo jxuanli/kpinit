@@ -52,7 +52,7 @@ rm -rf ./workspace
 
 ### File paths detection
 
-`workspace/context.json` contains file paths used to extract information for static analysis and file generation. Instead of having to specify paths with command options, `kpinit` automatically detects needed files for creating a kernel-pwning workspace. This reduces the need for manual setup. When detection fails, the user can manually specify the paths.
+`workspace/context.json` contains file paths used to extract information for static analysis and file generation. Instead of having to specify paths with command options, `kpinit` automatically detects needed files for creating a kernel-pwning workspace. This reduces the need for manual setup. When detection fails, the user can manually specify the paths and rerun `kpinit` (the changes will be applied).
 
 ### GDB scripting
 Generic GDB scripts for adding symbol files (vmlinux and loadable modules) are included in `workspace/challenge/debug.gdb`. Offsets are automatically computed when KASLR is enabled. Extra GDB scripting can be added in `workspace/exploit/extra.gdb`.

@@ -62,7 +62,7 @@ char *cyclic(char *buf, int size);
 void shell();
 
 /*
- * Registers a segfault handler to get a shell when segfaults
+ * Registers a segfault handler to get a shell then segfaults
  */
 void crash();
 
