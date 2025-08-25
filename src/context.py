@@ -40,13 +40,13 @@ class Setting:
         if self.pathfunc is not None:
             return self.pathfunc(val)
         else:
-            self.logger.error(
+            self.error(
                 f"wspath called on setting {self.name} which is invalid. Raise a Github issue if you see this."
             )
 
     def check(self):
         if self.notnone and self.val is None:
-            self.logger.error(
+            self.error(
                 f"The setting for {self.name} is invalid, change workspace/{CONTEXT_FILE} in order to proceed"
             )
 
@@ -157,7 +157,7 @@ class Context:
     def update_arch(self):
         vmlinux = self.vmlinux.get()
         if vmlinux is None:
-            self.logger.error(
+            self.error(
                 "Could not find vmlinux. Raise a Github issue if you see this message."
             )
         vmlinux_info = subprocess.run(

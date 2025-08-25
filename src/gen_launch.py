@@ -1,6 +1,6 @@
 import os
 import re
-from utils import logger, ctx
+from utils import warn, error, ctx
 from checks import check_qemu
 import shutil
 
@@ -94,7 +94,7 @@ def get_qemu_cmd(file_bs):
     """
     idx = file_bs.find(QEMU_MAGIC)
     if idx < 0:
-        logger.error("Cannot find qemu_magic in provided file content.")
+        error("Cannot find qemu_magic in provided file content.")
     return file_bs[idx:]
 
 
@@ -175,7 +175,7 @@ def gen_launch():
     script += GDB_CMD.format(ctx.challdir("debug.gdb"), gdb, gdb)
     qemucmd = gen_qemu_cmd()
     if qemucmd is None:
-        logger.warn("Unexpected boot script format detected.")
+        warn("Unexpected boot script format detected.")
         shutil.copy2(ctx.run_sh.get(), launch_fpath)
         return
     script += qemucmd

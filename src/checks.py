@@ -1,4 +1,4 @@
-from utils import logger, ctx
+from utils import info, warn, error, important, ctx
 import subprocess
 import re
 
@@ -10,13 +10,13 @@ def check_cpu(cpu):
     """
     if ctx.arch == "x86-64":
         if "+smep" in cpu:
-            logger.warn("SMEP enabled")
+            warn("SMEP enabled")
         else:
-            logger.info("SMEP disabled")
+            info("SMEP disabled")
         if "+smap" in cpu:
-            logger.warn("SMAP enabled")
+            warn("SMAP enabled")
         else:
-            logger.info("SMAP disabled")
+            info("SMAP disabled")
 
 
 def check_append(append):
@@ -25,21 +25,21 @@ def check_append(append):
     @effect: prints out checks on append option
     """
     if "nokaslr" in append:
-        logger.info("KASLR disabled")
+        info("KASLR disabled")
     else:
-        logger.warn("KASLR enabled")
+        warn("KASLR enabled")
     if "oops=panic" in append or "panic_on_oops=1" in append:
-        logger.warn("Kernel panic on oops")
+        warn("Kernel panic on oops")
     else:
-        logger.info("panic_on_oops disabled")
+        info("panic_on_oops disabled")
     if "kpti=1" in append or "pti=on" in append:
-        logger.warn("KPTI enabled")
+        warn("KPTI enabled")
     else:
-        logger.info("KPTI disabled")
+        info("KPTI disabled")
 
 
 def check_qemu(tokens):
-    logger.important("Checking qemu command line options")
+    important("Checking qemu command line options")
     runsh = open(ctx.run_sh.get(), "r").read()
     if "cpu" in tokens:
         check_cpu(tokens["cpu"])
@@ -70,18 +70,18 @@ class KernelConfig:
 
     def print_msg(self, is_set):
         if is_set is None:
-            logger.warn(f"{self.name} is not checked")
+            warn(f"{self.name} is not checked")
             return
         if is_set:
             if self.is_config_set_desired:
-                logger.info(self.msg_if_set)
+                info(self.msg_if_set)
             else:
-                logger.warn(self.msg_if_set)
+                warn(self.msg_if_set)
         else:
             if self.is_config_set_desired:
-                logger.warn(self.msg_if_not_set)
+                warn(self.msg_if_not_set)
             else:
-                logger.info(self.msg_if_not_set)
+                info(self.msg_if_not_set)
 
     def check_kconfig(self, configs):
         self.print_msg(f"{self.name}=y" in configs)
@@ -110,7 +110,7 @@ class KernelConfig:
                 stderr=subprocess.DEVNULL,
             ).decode()
             if MAGICSTR not in res:
-                logger.warn("Something went terribly wrong while running gdb")
+                warn("Something went terribly wrong while running gdb")
                 return self.NOSYMBOL
             return res.split(MAGICSTR)[1]
         except Exception:
@@ -268,7 +268,7 @@ def check_config():
         RandStruct(),
         Memcg(),
     ]
-    logger.important("Checking kernel configs")
+    important("Checking kernel configs")
     if ctx.config.get():
         check_kconfig(configs)
     else:
@@ -278,5 +278,5 @@ def check_config():
             text=True,
         ).stdout
         if "not stripped" not in vmlinux_info:
-            logger.error("Vmlinux does not contain kernel symbols")
+            error("Vmlinux does not contain kernel symbols")
         check_vmlinux(configs)

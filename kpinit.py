@@ -14,7 +14,7 @@ from extract_files import (
     extract_init,
     extract_ko,
 )
-from utils import logger, ctx
+from utils import warn, error, important, ctx
 from checks import check_config
 
 
@@ -46,8 +46,8 @@ def gen_workspace():
     if os.path.exists(ws_path):
         ctx.create_logfile()
         if not os.path.isdir(ws_path):
-            logger.error("Previous workspace is not a directory")
-        logger.warn(
+            error("Previous workspace is not a directory")
+        warn(
             "Removing existing workspace/challenge and workspace/exploit to generate a new one"
         )
         # preserves the old exploit
@@ -68,9 +68,9 @@ def gen_workspace():
     # recovers the old exploit
     if os.path.isfile(ctx.wsdir("exploit.c")):
         shutil.copy2(ctx.wsdir("exploit.c"), ctx.expdir("exploit.c"))
-    logger.important("Finished generating workspace")
+    important("Finished generating workspace")
 
 
 if __name__ == "__main__":
     gen_workspace()
-    logger.important("happy hacking!")
+    important("happy hacking!")
