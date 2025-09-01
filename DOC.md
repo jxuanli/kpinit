@@ -80,7 +80,7 @@ void pin_cpu(int core_id);
 void retspill(struct syscall_regs *regs);
 
 /*
- * Write the #!/bin/sh header and `cmd` to `path` with permission set to 777
+ * Writes the #!/bin/sh header and `cmd` to `path` with permission set to 777
  *
  */
 int setup_modprobe(char *path, char *cmd);
@@ -97,4 +97,10 @@ int run_modprobe();
  * @len: size of the memory region to be flushed from the TLB
  */
 void flush_tlb(void *addr, long len);
+
+/*
+ * Prevents exploits from running unintentionally when the NO_KPINIT_EXPLOIT
+ * variable is set
+ */
+static void __no_kpinit_exploit(void);
 ```

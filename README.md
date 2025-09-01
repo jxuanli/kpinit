@@ -50,6 +50,8 @@ Removing all generated files is as simple as:
 rm -rf ./workspace
 ```
 
+You may optionally set the `NO_KPINIT_EXPLOIT` environment variable to prevent exploits from running unintentionally on your host machine.
+
 ### File paths detection
 
 `workspace/context.json` contains file paths used to extract information for static analysis and file generation. Instead of having to specify paths with command options, `kpinit` automatically detects needed files for creating a kernel-pwning workspace. This reduces the need for manual setup. When detection fails, the user can manually specify the paths and rerun `kpinit` (the changes will be applied).
@@ -117,5 +119,6 @@ challenge dir/
 - [x] generates an exploit file serving script
   - The localhost can then be exposed with tools such as `ngrok`
 - [x] preserves log
+- [x] optionally prevents unintended exploit runs
 
 Only GDB is currently supported.
