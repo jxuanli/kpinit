@@ -24,6 +24,7 @@ class Setting:
         if not os.path.exists(val):
             return False
         self.setval(val, notnone)
+        return True
 
     def setval(self, val: str, notnone=False):
         self.val = val
@@ -125,10 +126,15 @@ class Context:
             for name, val in deserialized.items():
                 for setting in self.settings:
                     if setting.name == name and val is not None:
-                        setting.setval(val)
-                        break
+                        if setting.set(val):
+                            continue
+                        val = self.rootdir(val.split("/")[-1])
+                        if not setting.set(val):
+                            return False
             if self.vmlinux.get() is not None:
                 self.update_arch()
+            else:
+                return False
             return True
         return False
 

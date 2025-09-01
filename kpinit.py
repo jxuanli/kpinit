@@ -48,7 +48,7 @@ def gen_workspace():
         if not os.path.isdir(ws_path):
             error("Previous workspace is not a directory")
         warn(
-            "Removing existing workspace/challenge and workspace/exploit to generate a new one"
+            "Removing existing ./workspace/challenge and workspace/exploit to generate a new one"
         )
         # preserves the old exploit
         if os.path.isfile(ctx.expdir("exploit.c")):

@@ -125,6 +125,7 @@ def extract_context():
     generate context.json file if does not exist, otherwise use the existing settings
     """
     if not ctx.load():
+        info("Creating new ./workspace/context.json")
         for fname in os.listdir(ctx.rootdir()):
             if fname.endswith(".ko"):
                 ctx.vuln_ko.set(ctx.rootdir(fname))
@@ -148,5 +149,7 @@ def extract_context():
                 ctx.ramfs.set(ctx.rootdir(fname))
             elif "config" in fname:
                 ctx.config.set(ctx.rootdir(fname))
+    else:
+        info("Reusing existing ./workspace/context.json")
     important(ctx)
     ctx.check()
