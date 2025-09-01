@@ -40,13 +40,13 @@ class Setting:
         if self.pathfunc is not None:
             return self.pathfunc(val)
         else:
-            self.error(
+            self.logger.error(
                 f"wspath called on setting {self.name} which is invalid. Raise a Github issue if you see this."
             )
 
     def check(self):
         if self.notnone and self.val is None:
-            self.error(
+            self.logger.error(
                 f"The setting for {self.name} is invalid, change workspace/{CONTEXT_FILE} in order to proceed"
             )
 
@@ -163,14 +163,11 @@ class Context:
         from utils import runcmd
 
         vmlinux = self.vmlinux.get()
-        if vmlinux is None:
-            self.error(
-                "Could not find vmlinux. Raise a Github issue if you see this message."
-            )
-        vmlinux_info = runcmd("file", vmlinux)
-        self.arch = "x86-64"
-        if "aarch64" in vmlinux_info:
-            self.arch = "aarch64"
+        if vmlinux is not None:
+            vmlinux_info = runcmd("file", vmlinux)
+            self.arch = "x86-64"
+            if "aarch64" in vmlinux_info:
+                self.arch = "aarch64"
 
     def __repr__(self):
         return f"Context: \n{json.dumps(self.serialize(), indent=4)}\n"

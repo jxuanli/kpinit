@@ -53,7 +53,9 @@ def extract_ko():
         mod = mods[0]
         if len(mods) > 1:
             info(f"Modules: {mods}")
-            warn("Detected multiple loadable modules, select which one ❱")
+            warn(
+                f"Detected multiple loadable modules, select which one (default: {mod.split('/')[-1]}) ❱"
+            )
             mod_end = input()
             for m in mods:
                 if m.endswith(mod_end):
@@ -116,6 +118,7 @@ def extract_context():
                 ctx.vuln_ko.set(ctx.rootdir(fname))
             elif "Image" in fname or "vmlinuz" in fname:
                 ctx.image.set(ctx.rootdir(fname), notnone=True)
+                ctx.update_arch()
             elif "vmlinux" in fname and b"\x7fELF" == open(fname, "rb").read(4):
                 ctx.vmlinux.set(ctx.rootdir(fname))
                 ctx.update_arch()

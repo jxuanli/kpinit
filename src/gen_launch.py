@@ -152,7 +152,7 @@ def gen_qemu_cmd():
             if len(realcmd) == 0:
                 realcmd += line + " \\\n"
             else:
-                realcmd += "\t" + line + "\\\n"
+                realcmd += "\t" + line + " \\\n"
             if not islast:
                 continue
         if islast:
