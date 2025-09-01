@@ -115,14 +115,21 @@ def replace_append(m):
 
 
 def replace_qemuline(line):
-    if line.startswith("-initrd"):
-        return f"-initrd {ctx.ramfs.wspath}"
     pattern = re.compile(r"(?:\.\.?/|/)[\w./\-\+@%~]+")
+    line = pattern.sub(replace_paths, line)
+    pattern = re.compile(r"(?<!/)[a-zA-Z0-9.]+")
     line = pattern.sub(replace_paths, line)
     pattern = re.compile(r'-append\s+([\'"])([ -~]*?)\1')
     line = pattern.sub(replace_append, line)
-    pattern = re.compile(r"(?<!/)[a-zA-Z0-9.]+")
-    line = pattern.sub(replace_paths, line)
+    pattern = re.compile(r"-initrd\s+(?:\.\.?/|/)[\w./\-\+@%~]+")
+    line = pattern.sub(f"-initrd {ctx.ramfs.wspath}", line)
+    for option in (
+        "s",
+        "gdb",
+        "S",
+    ):
+        pattern = re.compile(rf"-{option}(?:\s|$)[^-]*")
+        line = pattern.sub("", line)
     return line
 
 
@@ -133,25 +140,26 @@ def gen_qemu_cmd():
     qemucmd = get_qemu_cmd(content)
     opts = get_qemu_options(qemucmd.replace("\\", " "))
     check_qemu(opts)
-    if "\\" in qemucmd:
-        realcmd = ""
-        for line in qemucmd.splitlines():
-            islast = "\\" not in line
-            line = line.split("\\")[0].strip()
-            line = replace_qemuline(line)
+    realcmd = ""
+    for line in qemucmd.splitlines():
+        line = line.strip()
+        islast = "\\" != line[-1]
+        if not islast:
+            line = line[:-1]
+            line = line.strip()
+        line = replace_qemuline(line)
+        if len(line) != 0:
             if len(realcmd) == 0:
-                realcmd = line + " \\\n"
+                realcmd += line + " \\\n"
+            else:
+                realcmd += "\t" + line + "\\\n"
+            if not islast:
                 continue
-            if not line.lower().startswith("-s "):
-                realcmd += f"\t{line} \\\n"
-            if islast:
-                realcmd += "\t-gdb tcp::$PORT \n"
-                break
-        qemucmd = realcmd
-    else:
-        qemucmd = replace_qemuline(qemucmd.splitlines()[0])
+        if islast:
+            realcmd += "\t-gdb tcp::$PORT \n"
+            break
     # TODO: add the remaining lines
-    return qemucmd
+    return realcmd
 
 
 def gen_launch():
