@@ -1,7 +1,7 @@
 import os
 import shutil
 import subprocess
-from utils import info, warn, error, important, ctx
+from utils import info, warn, error, important, ctx, runcmd
 
 
 def decompress_ramfs():
@@ -17,12 +17,13 @@ def decompress_ramfs():
     os.chdir(ram_path)
     if ctx.ramfs.get().endswith(".gz"):
         shutil.copy(ctx.ramfs.get(), archive_path)
-        subprocess.run(["gunzip", archive_path])
+        runcmd("gunzip", archive_path, fail_on_error=True)
     else:
         shutil.copy(ctx.ramfs.get(), cpio_fpath)
     if not os.path.isfile(cpio_fpath):
         error("Missing cpio: " + cpio_fpath)
-    subprocess.run([f"cpio -idm < {cpio_fpath}"], shell=True)
+    f = open(cpio_fpath, "rb")
+    subprocess.run(["cpio", "-idm"], stdin=f, check=True)
     os.remove(cpio_fpath)
     os.chdir(prev)
 
@@ -53,9 +54,9 @@ def extract_ko():
         if len(mods) > 1:
             info(f"Modules: {mods}")
             warn("Detected multiple loadable modules, select which one ❱")
-            mod_substr = input()
+            mod_end = input()
             for m in mods:
-                if mod_substr in m:
+                if m.endswith(mod_end):
                     mod = m
                     break
     if mod is None or not os.path.exists(mod):
@@ -71,25 +72,17 @@ def extract_vmlinux():
     if ctx.vmlinux.get() is None:
         if shutil.which("vmlinux-to-elf") is not None:
             info("Extracting vmlinux... (might take a minute)")
-            out = subprocess.run(
-                ["vmlinux-to-elf", ctx.image.get(), vmlinux_path],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-            ).stdout
-            if b"Successfully wrote the new ELF kernel" in out:
+            out = runcmd("vmlinux-to-elf", ctx.image.get(), vmlinux_path)
+            if out is not None and "Successfully wrote the new ELF kernel" in out:
                 info("Extracted vmlinux with vmlinux-to-elf")
                 ctx.vmlinux.set(vmlinux_path)
                 ctx.update_arch()
     if ctx.vmlinux.get() is None:
         # fallback
         warn(f"Extracting vmlinux with vmlinux-to-elf failed: {out}")
-        out = subprocess.check_output(
-            [
-                os.path.join(
-                    os.path.dirname(os.path.abspath(__file__)), "extract-vmlinux"
-                ),
-                ctx.image.get(),
-            ]
+        out = runcmd(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "extract-vmlinux"),
+            ctx.image.get(),
         )
         if len(out) < 0x100:
             error("Failed to extract vmlinux")
@@ -98,25 +91,17 @@ def extract_vmlinux():
         ctx.vmlinux.set(vmlinux_path)
         ctx.update_arch()
         info("Extracted vmlinux with extract-vmlinux")
-
-    try:
-        info("Finding original linux source path...")
-        path = (
-            subprocess.run(
-                f"readelf --debug-dump=info {ctx.vmlinux.get()} | grep -m 1 'DW_AT_comp_dir'",
-                shell=True,
-                capture_output=True,
-                text=True,
-            )
-            .stdout.strip()
-            .split(" ")[-1]
-        )
+    info("Finding original linux source path...")
+    out = runcmd("readelf", "--debug-dump=info", ctx.vmlinux.get())
+    if out is not None:
+        path = None
+        for line in out.splitlines():
+            if "DW_AT_comp_dir" in line:
+                path = line.strip().split(" ")[-1]
         if path and len(path) > 0:
             ctx.build_path.setval(path)
             info(f"Found original linux source path at {path}")
             return
-    except subprocess.CalledProcessError as e:
-        error(f"Error: {e}")
     warn("Could not find original linux source path")
 
 

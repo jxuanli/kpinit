@@ -1,6 +1,5 @@
 import os
 import json
-import subprocess
 from logger import Logger
 from typing import Dict
 
@@ -161,16 +160,14 @@ class Context:
         self.logger.logfile = open(logfile_path, "w")
 
     def update_arch(self):
+        from utils import runcmd
+
         vmlinux = self.vmlinux.get()
         if vmlinux is None:
             self.error(
                 "Could not find vmlinux. Raise a Github issue if you see this message."
             )
-        vmlinux_info = subprocess.run(
-            ["file", vmlinux],
-            stdout=subprocess.PIPE,
-            text=True,
-        ).stdout
+        vmlinux_info = runcmd("file", vmlinux)
         self.arch = "x86-64"
         if "aarch64" in vmlinux_info:
             self.arch = "aarch64"

@@ -1,5 +1,4 @@
-from utils import info, warn, error, ctx
-import subprocess
+from utils import info, warn, error, ctx, runcmd
 
 ko_gdb_template = """
 python
@@ -56,9 +55,7 @@ c
 
 
 def gen_debug():
-    vmlinux_info = subprocess.run(
-        ["readelf", "-l", ctx.vmlinux.get()], capture_output=True, text=True
-    ).stdout
+    vmlinux_info = runcmd("readelf", "-l", ctx.vmlinux.get(), fail_on_error=True)
     base = None
     for line in vmlinux_info.splitlines():
         if "LOAD" in line:
@@ -79,18 +76,10 @@ def gen_debug():
                 f"set substitute-path {ctx.build_path.get()} {ctx.linux_src.get()}\n"
             )
     content += f"add-symbol-file {ctx.expdir('exploit')}\n"
-    vmlinux_info = subprocess.run(
-        ["file", ctx.vmlinux.get()], capture_output=True, text=True
-    ).stdout
-    if "debug_info" in vmlinux_info:
+    vmlinux_info = runcmd("file", ctx.vmlinux.get())
+    if vmlinux_info is not None and "debug_info" in vmlinux_info:
         if ctx.vuln_ko.get() is not None:
-            out = (
-                subprocess.check_output(
-                    ["strings", ctx.vuln_ko.wspath], stderr=subprocess.DEVNULL
-                )
-                .decode()
-                .strip()
-            )
+            out = runcmd("strings", ctx.vuln_ko.wspath, fail_on_error=True)
             name = ""
             for line in out.splitlines():
                 if len(line) < 20 and line.startswith("name=") and line[5:].isalnum():

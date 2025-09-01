@@ -1,5 +1,4 @@
-from utils import info, warn, error, important, ctx
-import subprocess
+from utils import info, warn, error, important, ctx, runcmd
 import re
 
 
@@ -96,19 +95,17 @@ class KernelConfig:
         try:
             gdb = "gdb" if "x86" in ctx.arch else "gdb-multiarch"
             MAGICSTR = '"hi"'
-            res = subprocess.check_output(
-                [
-                    gdb,
-                    "-batch",
-                    "-ex",
-                    f"file {ctx.vmlinux.get()}",
-                    "-ex",
-                    f"print {MAGICSTR}",
-                    "-ex",
-                    cmd,
-                ],
-                stderr=subprocess.DEVNULL,
-            ).decode()
+            res = runcmd(
+                gdb,
+                "-batch",
+                "-ex",
+                f'file "{ctx.vmlinux.get()}"',
+                "-ex",
+                f"print {MAGICSTR}",
+                "-ex",
+                cmd,
+                verbose=False,
+            )
             if MAGICSTR not in res:
                 warn("Something went terribly wrong while running gdb")
                 return self.NOSYMBOL
@@ -272,11 +269,7 @@ def check_config():
     if ctx.config.get():
         check_kconfig(configs)
     else:
-        vmlinux_info = subprocess.run(
-            ["file", ctx.vmlinux.get()],
-            stdout=subprocess.PIPE,
-            text=True,
-        ).stdout
+        vmlinux_info = runcmd("file", ctx.vmlinux.get())
         if "not stripped" not in vmlinux_info:
-            error("Vmlinux does not contain kernel symbols")
+            error("vmlinux does not contain kernel symbols")
         check_vmlinux(configs)
