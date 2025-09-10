@@ -36,14 +36,14 @@ while [ $# -gt 0 ]; do
   shift
 done
 """
-COMPILE_EXPLOIT = (
-    "{} ./exploit.c ./util/io_helpers.c ./util/general.c -g -o ./exploit -static"
-)
-CPIO_SCRIPT = """
+COMPILE_EXPLOIT = """
+{} ./exploit.c ./util/io_helpers.c ./util/general.c -g -o ./exploit -static
 if [ $? -ne 0 ]; then
   echo "failed on compiling exploit script"
   exit 1
 fi
+"""
+CPIO_SCRIPT = """
 fsname="{}"
 compressedfs="{}"
 cp ./exploit ../challenge/$fsname/exploit
@@ -121,7 +121,7 @@ def replace_qemuline(line):
     line = pattern.sub(replace_paths, line)
     pattern = re.compile(r'-append\s+([\'"])([ -~]*?)\1')
     line = pattern.sub(replace_append, line)
-    pattern = re.compile(r"-initrd\s+(?:\.\.?/|/)[\w./\-\+@%~]+")
+    pattern = re.compile(r"-initrd\s+[\w./\-\+@%~]+")
     line = pattern.sub(f"-initrd {ctx.ramfs.wspath}", line)
     for option in (
         "s",

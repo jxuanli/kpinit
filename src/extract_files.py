@@ -112,7 +112,7 @@ def extract_context():
     generate context.json file if does not exist, otherwise use the existing settings
     """
     if not ctx.load():
-        info("Creating new ./workspace/context.json")
+        info("Creating ./workspace/context.json")
         for fname in os.listdir(ctx.rootdir()):
             if fname.endswith(".ko"):
                 ctx.vuln_ko.set(ctx.rootdir(fname))
