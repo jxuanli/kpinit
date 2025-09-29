@@ -31,6 +31,10 @@ def check_append(append):
         warn("Kernel panic on oops")
     else:
         info("panic_on_oops disabled")
+    if "panic_on_warn" in append:
+        warn("panic_on_warn enabled")
+    else:
+        info("panic_on_warn disabled")
     if "kpti=1" in append or "pti=on" in append:
         warn("KPTI enabled")
     else:

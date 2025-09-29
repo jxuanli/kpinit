@@ -50,7 +50,7 @@ cp ./exploit ../challenge/$fsname/exploit
 cp ./init ../challenge/$fsname/init
 cd ../challenge/$fsname
 find . -print0 |
-  cpio --null -ov --format=newc |
+  cpio --null -ov --format=newc -R root:root |
   gzip -9 -q >$compressedfs
 cd -
 """
