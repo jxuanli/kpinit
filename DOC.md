@@ -103,4 +103,9 @@ void flush_tlb(void *addr, long len);
  * variable is set
  */
 static void __no_kpinit_exploit(void);
+
+/*
+ * Reverses the order of a 64-byte number
+ */
+#define swab64(x)
 ```
