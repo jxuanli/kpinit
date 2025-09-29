@@ -71,6 +71,10 @@ def extract_ko():
 def extract_vmlinux():
     out = b""
     vmlinux_path = ctx.wsdir("vmlinux")  # path used if vmlinux is not provided
+    if vmlinux_path is not None and os.path.exists(vmlinux_path):
+        # optimization -- avoid repeated vmlinux generation
+        ctx.vmlinux.set(vmlinux_path)
+        ctx.update_arch()
     if ctx.vmlinux.get() is None:
         if shutil.which("vmlinux-to-elf") is not None:
             info("Extracting vmlinux... (might take a minute)")
