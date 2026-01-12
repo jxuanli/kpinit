@@ -111,10 +111,10 @@ challenge dir/
   - [x] adds `vuln.ko` symbols if they exist (when `vmlinux` contains `debug_info`)
   - [x] sources Linux source code
   - [x] supports custom breakpoints
-- [ ] generates exploit helpers (See [DOC.md](https://github.com/jxuanli/kpinit/blob/main/DOC.md) for documentations)
+- [x] generates exploit helpers (See [DOC.md](https://github.com/jxuanli/kpinit/blob/main/DOC.md) for documentations)
   - `info`, `warn`, `error`, `important`, `input`, `cyclic`, etc (similar to those in pwntools)
   - retspill, `modprobe_path`, `core_dump`
-  - [ ] bpf
+  - BPF helper macros and functions
 - [ ] extracts files from `.qcow` or `.img` files
 - [x] generates an exploit file serving script
   - The localhost can then be exposed with tools such as `ngrok`
