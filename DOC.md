@@ -53,6 +53,30 @@ i32 checkw(int cond, char *msg);
  * @return: the pointer to the string
  */
 char *cyclic(char *buf, int size);
+
+/*
+ * Checks the return value of a system call. If the syscall returned an error,
+ * prints it and exits.
+ */
+#define SYSCHK(x)                                                              \
+  ({                                                                           \
+    typeof(x) __res = (x);                                                     \
+    if (__res == (typeof(x))-1)                                                \
+      error("SYSCHK(" #x "): %s", strerror(errno));                            \
+    __res;                                                                     \
+  })
+
+/*
+ * Checks the return value of a system call. If the syscall returned an error,
+ * prints the error and continues.
+ */
+#define SYSWARN(x)                                                             \
+  ({                                                                           \
+    typeof(x) __res = (x);                                                     \
+    if (__res == (typeof(x))-1)                                                \
+      warn("SYSCHK(" #x "): %s", strerror(errno));                             \
+    __res;                                                                     \
+  })
 ```
 ### General exploit helpers
 ```c
@@ -60,6 +84,11 @@ char *cyclic(char *buf, int size);
  * Checks if root (uid = 0). If so, it gets a shell; otherwise, it throws an error.
  */
 void shell();
+
+/*
+ * Drops to a shell with only assembly instructions. Only available for x86-64.
+ */
+__attribute__((naked)) void shell2();
 
 /*
  * Registers a segfault handler to get a shell then segfaults
@@ -105,7 +134,9 @@ void flush_tlb(void *addr, long len);
 static void __no_kpinit_exploit(void);
 
 /*
- * Reverses the order of a 64-byte number
+ * Reverses the byte order of a 64-bit number
+ *
+ * @x: the number whose byte order is to be reversed
  */
-#define swab64(x)
+#define swab64(x) /*...*/
 ```
