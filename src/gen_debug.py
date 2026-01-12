@@ -1,34 +1,4 @@
-from utils import info, warn, error, ctx, runcmd
-
-ko_gdb_template = """
-python
-import gdb
-TARGET_MODULE = '{module_name}'
-inferior = gdb.inferiors()[0]
-module_struct = {{ field.name: field.bitpos for field in gdb.parse_and_eval('*(struct module*)0').type.fields() }}
-shifted_by = module_struct['list'] // 8
-module_list = int(gdb.parse_and_eval('&modules'))
-print(module_list)
-head = module_list
-target_text_addr = None
-while True:
-    # TODO: check kernel version
-    head = int(gdb.parse_and_eval(f'((struct list_head *) ({{head}}))->next'))
-    module = head - shifted_by
-    module_name_addr = int(gdb.parse_and_eval(f'(void *)(&((struct module *) ({{module}}))->name[0])'))
-    module_name = inferior.read_memory(module_name_addr, 32).tobytes() # Could be longer, but oh well
-    module_name = module_name.rstrip(b'\\0')
-    module_load = int(gdb.parse_and_eval(f'((struct module *) ({{module}}))->mem[0].base')) # 0: MOD_TEXT
-    print(module_name)
-    if module_name == TARGET_MODULE.encode():
-        target_text_addr = module_load
-    if head == module_list or target_text_addr is not None:
-        break
-if target_text_addr is None:
-    raise ValueError(f'Module {{TARGET_MODULE!r}} not found - not loading symbol files')
-gdb.execute(f'add-symbol-file {ko_path} {{target_text_addr:#x}}')
-end
-"""
+from utils import error, ctx, runcmd
 
 kbase_template = """
 python
@@ -76,23 +46,6 @@ def gen_debug():
                 f"set substitute-path {ctx.build_path.get()} {ctx.linux_src.get()}\n"
             )
     content += f"add-symbol-file {ctx.expdir('exploit')}\n"
-    vmlinux_info = runcmd("file", ctx.vmlinux.get())
-    if vmlinux_info is not None and "debug_info" in vmlinux_info:
-        if ctx.vuln_ko.get() is not None:
-            out = runcmd("strings", ctx.vuln_ko.wspath, fail_on_error=True)
-            name = ""
-            for line in out.splitlines():
-                if len(line) < 20 and line.startswith("name=") and line[5:].isalnum():
-                    name = line[5:]
-            if len(name) > 0:
-                info(f"Found module {name}")
-            else:
-                warn("Module name not found")
-            content += ko_gdb_template.format(
-                module_name=name, ko_path=ctx.vuln_ko.wspath
-            )
-    else:
-        warn("no debug info 😢")
 
     extra = ctx.expdir("extra.gdb")
     content += f"source {extra}\n"

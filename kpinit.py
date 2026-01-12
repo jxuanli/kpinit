@@ -13,6 +13,7 @@ from extract_files import (
     extract_context,
     extract_init,
     extract_ko,
+    extract_fsimg,
 )
 from utils import warn, error, important, ctx
 from checks import check_config
@@ -32,7 +33,10 @@ def gen_exploit():
     """
     gen_launch()
     extract_init()
-    extract_ko()
+    if ctx.ramfs.wspath is not None:
+        extract_ko()
+    elif ctx.fsimgs.get() is not None:
+        extract_fsimg()
     gen_debug()
     gen_exploit_src()
     check_config()
@@ -47,10 +51,9 @@ def gen_workspace():
         ctx.create_logfile()
         if not os.path.isdir(ws_path):
             error("Previous workspace is not a directory")
-        warn(
-            "Regenerating ./workspace/challenge and ./workspace/exploit"
-        )
+        warn("Regenerating ./workspace/challenge and ./workspace/exploit")
         # preserves the old exploit
+        # TODO: refactor this
         if os.path.isfile(ctx.expdir("exploit.c")):
             shutil.copy2(ctx.expdir("exploit.c"), ctx.wsdir("exploit.c"))
         if os.path.isdir(ctx.challdir()):

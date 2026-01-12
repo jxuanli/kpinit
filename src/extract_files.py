@@ -23,7 +23,7 @@ def decompress_ramfs():
     if not os.path.isfile(cpio_fpath):
         error("Missing cpio: " + cpio_fpath)
     f = open(cpio_fpath, "rb")
-    subprocess.run(["cpio", "-idm"], stdin=f, check=True)
+    subprocess.run(["cpio", "-idm"], stdin=f)
     os.remove(cpio_fpath)
     os.chdir(prev)
 
@@ -49,6 +49,7 @@ def extract_ko():
             if file.endswith(".ko") and file not in mods:
                 mods.append(os.path.join(dir, file))
     mod = None
+    # TODO: extract multiple
     if len(mods) > 0:
         mod = mods[0]
         if len(mods) > 1:
@@ -111,10 +112,55 @@ def extract_vmlinux():
     warn("Could not find original linux source path")
 
 
+def extract_fsimg():
+    if ctx.vuln_ko.get() is not None:
+        return
+    fsimgs = ctx.fsimgs.get()
+    guestfish_p = subprocess.Popen(
+        ["guestfish", "--listen"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        bufsize=1,
+    )
+    result = guestfish_p.stdout.readline()
+    prefix = "GUESTFISH_PID="
+    if result is None or not result.startswith(prefix):
+        warn("guestfish not installed")
+        return
+    guestfish_pid = int(result.split(";")[0][len(prefix) :], 10)
+    info(f"guestfish pid: {guestfish_pid}")
+
+    def guestfish(*args: str):
+        return runcmd("guestfish", f"--remote={guestfish_pid}", *args)
+
+    for img in fsimgs:
+        guestfish("add", ctx.rootdir(img), "readonly:true")
+    guestfish("run")
+    filesystems = guestfish("list-filesystems").splitlines()
+    if len(filesystems) == 0:
+        warn("Could not load the filesystem images in guestfish")
+    else:
+        for fs in filesystems:
+            if "unknown" in fs:
+                continue
+            name = fs.split(":")[0]
+            if len(name) == 0:
+                continue
+            guestfish("mount", name, "/")
+            for f in guestfish("find", "/").splitlines():
+                if f.endswith(".ko"):
+                    # TODO: move it out
+                    print(f)
+            guestfish("unmount", "/")
+    guestfish("quit")
+
+
 def extract_context():
     """
     generate context.json file if does not exist, otherwise use the existing settings
     """
+    imgs = []
     if not ctx.load():
         info("Creating ./workspace/context.json")
         for fname in os.listdir(ctx.rootdir()):
@@ -132,15 +178,18 @@ def extract_context():
                     fname.endswith(".sh")
                     or any(name in fname for name in ["start", "run", "launch"])
                 )
-                and open(fname, "rb").read(0x1000)
+                and "qemu" in open(fname, "r").read(0x1000)
             ):
                 ctx.run_sh.set(ctx.rootdir(fname), notnone=True)
             elif "linux" in fname and os.path.isdir(ctx.rootdir(fname)):
                 ctx.linux_src.set(ctx.rootdir(fname))
-            elif "cpio" in fname or "gz" in fname:
+            elif "cpio" in fname or "gz" in fname:  # TODO: use `file` command to check
                 ctx.ramfs.set(ctx.rootdir(fname))
-            elif "config" in fname:
+            elif fname.endswith(".qcow2") or fname.endswith(".img"):
+                imgs.append(fname)
+            elif "config" in fname and "CONFIG_" in open(fname, "r").read(0x1000):
                 ctx.config.set(ctx.rootdir(fname))
+        ctx.fsimgs.setval(imgs)
     else:
         info("Reusing existing ./workspace/context.json")
     important(ctx)

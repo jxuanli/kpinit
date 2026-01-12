@@ -1,5 +1,6 @@
 from utils import info, warn, error, important, ctx, runcmd
 import re
+from typing import List
 
 
 def check_cpu(cpu):
@@ -39,19 +40,57 @@ def check_append(append):
         warn("KPTI enabled")
     else:
         info("KPTI disabled")
+    # TODO: multiple cores
 
 
-def check_qemu(tokens):
+def check_qemu(parsed) -> str | None:
     important("Checking qemu command line options")
-    runsh = open(ctx.run_sh.get(), "r").read()
-    if "cpu" in tokens:
-        check_cpu(tokens["cpu"])
+    if (cpu := parsed.cpu) is not None:
+        check_cpu(cpu)
     else:
-        check_cpu(runsh)
-    if "append" in tokens:
-        check_append(tokens["append"])
+        warn("cpu options are not checked")
+    if (append := parsed.append) is not None:
+        check_append(append)
+        fsimgs = ctx.fsimgs.get()
+        if (
+            ctx.ramfs.get() is not None
+            or fsimgs is None
+            or not isinstance(fsimgs, List)
+        ):
+            return None
+        target = None
+        for e in append.split(" "):
+            prefix = "root="
+            if e.startswith(prefix):
+                target = e[len(prefix) :]
+                break
+        if target is None:
+            return None
+        imgfile = None
+        is_virtio = False
+        if target.startswith("/dev/sd"):
+            pass
+        elif target.startswith("/dev/vd"):
+            is_virtio = True
+        else:
+            return None
+        dev = target[7:][0]
+        imgfile = getattr(parsed, f"hd{dev}")
+        if imgfile is not None or parsed.drive is None:
+            return imgfile
+        target_idx = ord(dev) - ord("a")
+        for idx, drive in enumerate(parsed.drive):
+            if is_virtio and ",if=virtio" not in drive:
+                continue
+            if ("index=" not in drive and idx == target_idx) or (
+                f"index={target_idx}" in drive
+            ):
+                imgfile = drive.split("=")[1].split(",")[0]
+                break
+        return imgfile
     else:
-        check_append(runsh)
+        warn("append options are not checked")
+    return None
 
 
 class KernelConfig:

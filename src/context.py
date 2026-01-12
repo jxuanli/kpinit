@@ -1,7 +1,7 @@
 import os
 import json
 from logger import Logger
-from typing import Dict
+from typing import Dict, List
 
 
 CONTEXT_FILE = "context.json"
@@ -34,7 +34,7 @@ class Setting:
     @property
     def wspath(self):
         val = self.val
-        if val is None:
+        if val is None or isinstance(val, List):
             return None
         val = val.split("/")[-1]
         if self.pathfunc is not None:
@@ -57,6 +57,8 @@ class Context:
     """
 
     RAMFS = "ramfs"
+    FSIMG = "root file system image"
+    FSIMGS = "filesystem images"
     IMAGE = "kernel image"
     RUN_SH = "run.sh"
     VMLINUX = "vmlinux"
@@ -73,6 +75,8 @@ class Context:
         self.arch = None
         self.logger = Logger()
         self.ramfs = Setting(self, self.RAMFS, self.challdir)
+        self.fsimg = Setting(self, self.FSIMG)
+        self.fsimgs = Setting(self, self.FSIMGS)
         self.image = Setting(self, self.IMAGE)
         self.run_sh = Setting(self, self.RUN_SH)
         self.vmlinux = Setting(self, self.VMLINUX)
@@ -82,6 +86,8 @@ class Context:
         self.build_path = Setting(self, self.ORIG_LINUX_PATH)
         self.settings = (
             self.ramfs,
+            self.fsimg,
+            self.fsimgs,
             self.image,
             self.run_sh,
             self.vmlinux,
@@ -125,6 +131,9 @@ class Context:
             for name, val in deserialized.items():
                 for setting in self.settings:
                     if setting.name == name and val is not None:
+                        if isinstance(val, List):
+                            setting.setval(val)
+                            continue
                         if setting.set(val):
                             continue
                         val = self.rootdir(val.split("/")[-1])

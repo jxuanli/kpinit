@@ -10,7 +10,10 @@ important = ctx.logger.important
 
 def runcmd(*args: str, fail_on_error=False, verbose=True):
     try:
-        p = subprocess.run(args, capture_output=True)
+        p = subprocess.run(args, capture_output=True, timeout=30)
+    except subprocess.TimeoutExpired:
+        warn("timer expired")
+        return None
     except subprocess.CalledProcessError as e:
         error(f"subprocess error: {e}")
     stdout, stderr = p.stdout, p.stderr

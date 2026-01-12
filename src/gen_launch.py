@@ -3,6 +3,8 @@ import re
 from utils import warn, error, ctx
 from checks import check_qemu
 import shutil
+import argparse
+import shlex
 
 QEMU_MAGIC = "qemu-system-"
 HEADER = """#!/bin/bash
@@ -37,7 +39,7 @@ while [ $# -gt 0 ]; do
 done
 """
 COMPILE_EXPLOIT = """
-{} ./exploit.c ./util/io_helpers.c ./util/general.c -g -o ./exploit -static
+{} ./exploit.c ./util/io_helpers.c ./util/general.c ./util/bpf.c -g -o ./exploit -static
 if [ $? -ne 0 ]; then
   echo "failed on compiling exploit script"
   exit 1
@@ -54,6 +56,15 @@ find . -print0 |
   gzip -9 -q >$compressedfs
 cd -
 """
+QCOW_SCRIPT = """
+guestfish --rw -a {} <<_EOF_
+run
+mount /dev/sda /
+copy-in {} /
+unmount /
+quit
+_EOF_
+"""
 GDB_CMD = """
 sed -i "s/^target remote localhost:.*/target remote localhost:$PORT/" {}
 if [ "$GDB" = "yes" ]; then
@@ -65,26 +76,7 @@ if [ "$GDB" = "yes" ]; then
 fi
 """
 
-
-def get_qemu_options(command):
-    """
-    @command: a valid qemu command
-    @return: list of options, a map with their corresponding values of the qemu command
-    """
-    parts = command.split()
-    opts = {}
-    i = 1  # skip the qemu bin name
-    while i < len(parts):
-        if not parts[i].startswith("-"):
-            return opts
-        option = parts[i][1:]
-        token = ""
-        i += 1
-        while i < len(parts) and not parts[i].startswith("-"):
-            token += parts[i] + " "
-            i += 1
-        opts[option] = token.strip()
-    return opts
+parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
 
 
 def get_qemu_cmd(file_bs):
@@ -121,8 +113,9 @@ def replace_qemuline(line):
     line = pattern.sub(replace_paths, line)
     pattern = re.compile(r'-append\s+([\'"])([ -~]*?)\1')
     line = pattern.sub(replace_append, line)
-    pattern = re.compile(r"-initrd\s+[\w./\-\+@%~]+")
-    line = pattern.sub(f"-initrd {ctx.ramfs.wspath}", line)
+    if ctx.ramfs.wspath is not None:
+        pattern = re.compile(r"-initrd\s+[\w./\-\_\+@%~\"]+")
+        line = pattern.sub(f"-initrd {ctx.ramfs.wspath}", line)
     for option in (
         "s",
         "gdb",
@@ -138,8 +131,21 @@ def gen_qemu_cmd():
     f = open(ctx.run_sh.get(), "r")
     content = f.read()
     qemucmd = get_qemu_cmd(content)
-    opts = get_qemu_options(qemucmd.replace("\\", " "))
-    check_qemu(opts)
+    opts = ["append", "smp", "cpu", "hda", "hdb", "hdc", "hdd"]
+    opts_append = ["drive"]
+    for opt in opts:
+        parser.add_argument(f"-{opt}")
+    for opt in opts_append:
+        parser.add_argument(f"-{opt}", action="append")
+    parser.add_argument("-s", action="store_true")
+    parsed, _ = parser.parse_known_args(shlex.split(qemucmd))
+    imgfile = check_qemu(parsed)
+    if imgfile is not None and (fsimgs := ctx.fsimgs.get()) is not None:
+        for img in fsimgs:
+            if os.path.basename(imgfile) == os.path.basename(img):
+                ctx.fsimg.set(ctx.rootdir(img))
+    else:
+        warn("Could not find root filesystem image")
     realcmd = ""
     for line in qemucmd.splitlines():
         line = line.strip()
@@ -167,25 +173,27 @@ def gen_launch():
     @assume: the directory structure in README.md has been created
     @effect: generate the launch.sh file
                 since this parses the run.sh, it will check the interesting qemu options
-                **checks SMAP, SMEP, KPTI, KASLR, and panic_on_oops**
+                **checks SMAP, SMEP, KPTI, KASLR, panic_on_warn, and panic_on_oops**
     """
     launch_fpath = ctx.expdir("launch.sh")
     script = HEADER
     script += OPTIONS
     compiler = "gcc"
-    if "aarch64" == ctx.arch:
-        compiler = "aarch64-linux-gnu-gcc"
-    script += COMPILE_EXPLOIT.format(compiler)
-    if ctx.ramfs.wspath is not None:
-        script += CPIO_SCRIPT.format(ctx.fsname(), ctx.ramfs.wspath)
-    gdb = "gdb" if "x86" in ctx.arch else "gdb-multiarch"
-    gdb += f" -ix {ctx.challdir('debug.gdb')}"
-    script += GDB_CMD.format(ctx.challdir("debug.gdb"), gdb, gdb)
     qemucmd = gen_qemu_cmd()
     if qemucmd is None:
         warn("Unexpected boot script format detected.")
         shutil.copy2(ctx.run_sh.get(), launch_fpath)
         return
+    if "aarch64" == ctx.arch:
+        compiler = "aarch64-linux-gnu-gcc"
+    script += COMPILE_EXPLOIT.format(compiler)
+    if ctx.ramfs.wspath is not None:
+        script += CPIO_SCRIPT.format(ctx.fsname(), ctx.ramfs.wspath)
+    elif ctx.fsimg.get() is not None:
+        script += QCOW_SCRIPT.format(ctx.fsimg.get(), ctx.expdir("exploit"))
+    gdb = "gdb" if "x86" in ctx.arch else "gdb-multiarch"
+    gdb += f" -ix {ctx.challdir('debug.gdb')}"
+    script += GDB_CMD.format(ctx.challdir("debug.gdb"), gdb, gdb)
     script += qemucmd
     f = open(launch_fpath, "w")
     f.write(script)
